@@ -1,0 +1,39 @@
+//Author: Haosong Liu
+implements Medium without using DiffX when trying to find the edge:
+1. Try every q and r paris to test is there any pq pair (Note that now p is fixed) that can pass all the test;
+2. After all these checks on q, we never find a good q, this means p is not good so after all these loop,
+let's check the last pqr pair we examined
+3. If that one still fails , it means our p is actually wrong. Try anther P(thus assigned q to p and start over)
+4. Once we find a valid pq(the edge), the rest of the code is the same; (reuse part2 in Medium)
+
+    GO<PV2> p = in.get(0);
+    
+    
+    //TRY EVERY q and r paris to test is there any pq pair (Note that now p is fixed)
+    // that can pass all the test(i.e: AreaABC sign all the same)
+    for(GO<PV2> q:in){
+      if(q==p){
+        continue;
+      }
+      for(GO<PV2> r:in){
+
+        if(r==p || r==q){
+          continue;
+      }
+      else if(AreaABC.sign(p,q,r)>0){
+        q=r;
+        states.add(new MState(out, p, q, r, "", "Make r the new q"));
+      }
+      //After all these checks on q, we never find a good q, this means p is not good
+      //so after all these loop, let's check the last pqr pair we examined
+      //if that one still fails, it means
+      //OUR P IS ACTUALLY WRONG! TRY ANOTHER P (thus assigned q to p and start over)
+      if(AreaABC.sign(p,q,in.get(in.size()-1))>0){
+        p=q;
+      }
+
+    }
+        
+
+      //r=null;
+    }

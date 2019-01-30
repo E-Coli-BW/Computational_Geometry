@@ -1,0 +1,20 @@
+//Arthur Haosong Liu
+//This document describes algorithm that works without DiffX for the Fast.java
+//It is for requirement 4' listed on the Blackboard discussion board
+
+1. Read in the first Point(<GO<PV2>>) Use the DiffX-free algorithm in Medium2 to judge whether this point is inside or on the 
+hull;
+2. while not finding a p inside hull:
+	 contunue read in points 
+   until you find a p that is internal point
+3. Use the p you find in step 2 as starting point, read in another point and call it q
+4. loop through the input points(denote the newly read-in point r:
+	if r==p || r==q:
+	  continue
+	else:
+	  calculate pq x pr (pq and pr are vectors) to get sine value
+	  calculate pq . pr (pq and pr are vectors) to get cosine value
+	  from cosine and sine value we can get tantine value 
+	  use arctan to get the angle value in range [0,360] (i.e: [0,2pi])
+5. sort q according to values of angle we get in step4
+6. Once we sort the q, we can use part2 of the code in Fast.java to find the hull;   
