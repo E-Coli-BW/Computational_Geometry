@@ -12,19 +12,7 @@ public class ABintersectCD extends GO<PV2> {
     this.d = d;
   }
 
-fv       }
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c
-  public PV2 calculate () {  c cv c  cv cv cv  c cv  cv cv cv cv cv cv
+  public PV2 calculate () {
     PV2 pa = a.xyz(); //a
     PV2 pb = b.xyz(); //b
     PV2 pc = c.xyz(); //c
@@ -40,9 +28,9 @@ fv       }
     //p=c-(d-c)*(c-a)*(b-a)/((d-c)*(b-a))
     //check if (d-c)x(b-a)==0 or not
     //Cross returns a value of type Real
-    if(vcd.cross(vab).approx()!=0.0){
-    PV2 complex_express = vcd.times(vac.cross(vab)).over(vcd.cross(vab));
-    PV2 p = pc.minus(complex_express); // This should be correct
+    if (vcd.cross(vab).approx()!=0.0) {
+		PV2 complex_express = vcd.times(vac.cross(vab)).over(vcd.cross(vab));
+		PV2 p = pc.minus(complex_express); // This should be correct
     }
     System.out.println("ap x ab " + p.minus(pa).cross(vab) + 
                         " cp x cd " + p.minus(pc).cross(vcd));

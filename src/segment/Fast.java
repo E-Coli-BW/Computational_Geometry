@@ -89,11 +89,24 @@ public class Fast implements Intersecter {
     @para ABintersectCD (GO<PV2> a, GO<PV2> b, GO<PV2>c, GO<PV2> d)
     */
 
-    //MY OWN CODE BEGINS
 
-    //segmentA=a.getSegment();
-    //segmentB=b.getSegment();
+	if (a == null || b == null ) {
+		return;
+	}
 
+    Segment segA = a.getSegment();
+    Segment segB = b.getSegment();
+
+	if (!segA.checked.contains(segB)) {
+	// Add new FState(null, a.getSegment(), b.getSegment()) to states
+		states.add( new FState(null, segA, segB) );
+		// if( segA.intersects(segB) ) {
+		//	GO<PV2> intersection = new ABintersectCD(segA.tail, segA.head, segB.tail, segB.head);
+		//	out.add(intersection);
+
+		}
+
+	}
     // GO<PV2> tail_of_segmentA=segmentA.tail;
     // GO<PV2> head_of_segmentA=segmentA.head;
     // GO<PV2> tail_of_segmentB=segmentB.tail;
