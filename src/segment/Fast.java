@@ -212,9 +212,23 @@ public class Fast implements Intersecter {
         // its successor node in the sweep list, but it does not
         // change the positions of the nodes in the sweep list.
 
-      }
-    }
+		// If we see an intersection, we want to swap the nodes becasue
+		// if a node is to the left of another node before we meet the intersection
+		// then after the intersection as we proceed on, that node will now be on the 
+		// right of the other node. i.e: Their relative positions swapped!
 
+		// node has a method called swwapWithNext() to do the swapping operation!
+		event.a.node.swapWithNext();
+
+		SweepNode nodeB = event.a.node;
+		SweepNode nodeA = event.b.node;
+
+		check(nodeA.getPrevious(), nodeA);
+		check(nodeB, nodeB.getNext());
+      }
+    
+	states.add( new FState(event.p.xyz().y, null, null) );
+	}
     return out;
   }
 }
