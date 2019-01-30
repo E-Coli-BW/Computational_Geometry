@@ -100,10 +100,18 @@ public class Fast implements Intersecter {
 	if (!segA.checked.contains(segB)) {
 	// Add new FState(null, a.getSegment(), b.getSegment()) to states
 		states.add( new FState(null, segA, segB) );
-		// if( segA.intersects(segB) ) {
-		//	GO<PV2> intersection = new ABintersectCD(segA.tail, segA.head, segB.tail, segB.head);
-		//	out.add(intersection);
 
+		if( segA.intersects(segB) ) {
+			//now I see that segA intersects with segB so 
+			//in segA's checked hashset, it should have added segB
+			//and so should segB
+			segA.checked.add(segB);
+			segB.checked.add(segA);
+
+			GO<PV2> intersection = new ABintersectCD(segA.tail, segA.head, segB.tail, segB.head);
+			out.add(intersection);
+			events.add( new Event(segA,segB,intersection) );
+			states.add( new FSate(null, segA, segB) );	
 		}
 
 	}
