@@ -151,21 +151,57 @@ public class Fast implements Intersecter {
     }
 
     while (events.size() > 0) {
+	  //Event contains two segment and a point
       Event event = events.poll();
 
       // Handle three types of event.
       // Add new FState(event.p.xyz().y, null, null) before and after
       // modifying sweep list.
       // Call check with all newly adjacent pairs of nodes.
+	  states.add( new FState(event.p.xyz().y, null, null) );
+	  // Each event contains 2 segments and a point 
+	  // the point can either be a tail, a head or an intersection
+
+	  // if it is a tail:
+	  // Add a tail events to the eventlist 
+	  // Add one segment to the sweepList
+	  // Tail(segment,null,s.tail) //@para type: segment,segment, point
+	  //also, when we meet a tail event, add that segment to eventlist priority queue
       if (event.b == null) {
         // EXERCISE 6
         // Tail event.
+		// Encountered a tail! This means we are seeing this segment for the first time
+		// Add this segment to the SweepNode object and then add the SweepNode to the SweepList! 
+		// (So that we know we already encountered it)
+		// Add a to sweep
+		sweep.add(event.a);
+		// Event object contains two segments 
+		
+		SweepNode nodeA = event.a.node;
+		// once we plug in this newly found node which we see its tail
+		// check this newly inserted tail node against its neibors to see
+		//if we have some new intersections or not
 
+		// 1. check this newly inserted node against its previous node(left neighbor)
+		check(nodeA.getPrevious(), nodeA);
+		// 2. check this newly inserted node against its next node(right neighbor), maintain the head-tail order by 
+		// maintaining the (left,right) parameter protocol
+		check(nodeA, nodeA.getNext());
+
+		
       }
+	  //if we meet a haed, remove the segment from the priority queue because now we are done with it
       else if (event.a == null) {
         // EXERCISE 7
-        // Head event.
+        // Head event, remove the segment we have seen completely from the eventlist priority queue
 
+		// If we see a head, that means we are reaching the end of this segment
+		// check its neighbors to see if we can find some new intersections BEFORE we remove it from
+		// the SweepList!!
+		SweepNode nodeB = event.b.node;
+		check( nodeB.getPrevious(), nodeB.getNext() );
+		// Now remove it from the list!
+		nodeB.remove();
 
       }
       else {
