@@ -100,10 +100,18 @@ public class Fast implements Intersecter {
 	if (!segA.checked.contains(segB)) {
 	// Add new FState(null, a.getSegment(), b.getSegment()) to states
 		states.add( new FState(null, segA, segB) );
-		// if( segA.intersects(segB) ) {
-		//	GO<PV2> intersection = new ABintersectCD(segA.tail, segA.head, segB.tail, segB.head);
-		//	out.add(intersection);
 
+		if( segA.intersects(segB) ) {
+			//now I see that segA intersects with segB so 
+			//in segA's checked hashset, it should have added segB
+			//and so should segB
+			segA.checked.add(segB);
+			segB.checked.add(segA);
+
+			GO<PV2> intersection = new ABintersectCD(segA.tail, segA.head, segB.tail, segB.head);
+			out.add(intersection);
+			events.add( new Event(segA,segB,intersection) );
+			states.add( new FSate(null, segA, segB) );	
 		}
 
 	}
@@ -143,21 +151,57 @@ public class Fast implements Intersecter {
     }
 
     while (events.size() > 0) {
+	  //Event contains two segment and a point
       Event event = events.poll();
 
       // Handle three types of event.
       // Add new FState(event.p.xyz().y, null, null) before and after
       // modifying sweep list.
       // Call check with all newly adjacent pairs of nodes.
+	  states.add( new FState(event.p.xyz().y, null, null) );
+	  // Each event contains 2 segments and a point 
+	  // the point can either be a tail, a head or an intersection
+
+	  // if it is a tail:
+	  // Add a tail events to the eventlist 
+	  // Add one segment to the sweepList
+	  // Tail(segment,null,s.tail) //@para type: segment,segment, point
+	  //also, when we meet a tail event, add that segment to eventlist priority queue
       if (event.b == null) {
         // EXERCISE 6
         // Tail event.
+		// Encountered a tail! This means we are seeing this segment for the first time
+		// Add this segment to the SweepNode object and then add the SweepNode to the SweepList! 
+		// (So that we know we already encountered it)
+		// Add a to sweep
+		sweep.add(event.a);
+		// Event object contains two segments 
+		
+		SweepNode nodeA = event.a.node;
+		// once we plug in this newly found node which we see its tail
+		// check this newly inserted tail node against its neibors to see
+		//if we have some new intersections or not
 
+		// 1. check this newly inserted node against its previous node(left neighbor)
+		check(nodeA.getPrevious(), nodeA);
+		// 2. check this newly inserted node against its next node(right neighbor), maintain the head-tail order by 
+		// maintaining the (left,right) parameter protocol
+		check(nodeA, nodeA.getNext());
+
+		
       }
+	  //if we meet a haed, remove the segment from the priority queue because now we are done with it
       else if (event.a == null) {
         // EXERCISE 7
-        // Head event.
+        // Head event, remove the segment we have seen completely from the eventlist priority queue
 
+		// If we see a head, that means we are reaching the end of this segment
+		// check its neighbors to see if we can find some new intersections BEFORE we remove it from
+		// the SweepList!!
+		SweepNode nodeB = event.b.node;
+		check( nodeB.getPrevious(), nodeB.getNext() );
+		// Now remove it from the list!
+		nodeB.remove();
 
       }
       else {
@@ -168,9 +212,23 @@ public class Fast implements Intersecter {
         // its successor node in the sweep list, but it does not
         // change the positions of the nodes in the sweep list.
 
-      }
-    }
+		// If we see an intersection, we want to swap the nodes becasue
+		// if a node is to the left of another node before we meet the intersection
+		// then after the intersection as we proceed on, that node will now be on the 
+		// right of the other node. i.e: Their relative positions swapped!
 
+		// node has a method called swwapWithNext() to do the swapping operation!
+		event.a.node.swapWithNext();
+
+		SweepNode nodeB = event.a.node;
+		SweepNode nodeA = event.b.node;
+
+		check(nodeA.getPrevious(), nodeA);
+		check(nodeB, nodeB.getNext());
+      }
+    
+	states.add( new FState(event.p.xyz().y, null, null) );
+	}
     return out;
   }
 }
