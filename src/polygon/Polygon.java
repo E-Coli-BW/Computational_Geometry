@@ -278,20 +278,15 @@ public class Polygon {
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
 
         if(iNode.getNext()!=oNode){
-          // oNode.swapWithNext();
-          oNode.swapWithNext();
+
+          check(oNode.getPrevious(),oNode);
+          check(iNode,iNode.getNext());
         }
+
         else{
-          iNode.swapWithNext();      
+          check(iNode.getPrevious(),iNode);
+          check(oNode,oNode.getNext());   
         }
-        check(iNode.getPrevious(),iNode);
-        check(oNode,oNode.getNext());
-
-
-
-        // sweep.add(iNode.getData());
-        // sweep.add(oNode.getData());
-
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
 
       }
