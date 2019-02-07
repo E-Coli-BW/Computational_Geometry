@@ -18,24 +18,12 @@
       return 1;
       }
       }
-
-
         if(AreaABC.sign(this.minY().p,this.maxY().p,that.minY().p)<0 ){
           return -1;
       }
       else{
         return 1;
       }
-
-
-
-
-
-
-
-      // that.minY
-
-      // return 0; // wrong
     }
 
 

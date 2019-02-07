@@ -33,8 +33,8 @@ public class Segment implements Comparable<Segment> {
     //4. Do the same check:
     // if AreaABC.sign(c,d,a)*AreaABC.sign(c,d,b)<0
     //5. If in both 3 and 4 we got true then ab and cd intersects
-    return AreaABC.sign(this.head,this.tail,that.tail)*AreaABC.sign(this.head,this.tail,that.head)<0 && 
-    AreaABC.sign(that.head,that.tail,this.head)*AreaABC.sign(that.head,that.tail,this.tail)<0 ;    
+    //return AreaABC.sign(this.head,this.tail,that.tail)*AreaABC.sign(this.head,this.tail,that.head)<0 && 
+    //AreaABC.sign(that.head,that.tail,this.head)*AreaABC.sign(that.head,that.tail,this.tail)<0 ;    
     
     //return false;
   }
