@@ -65,7 +65,7 @@ public class Medium2 implements Huller {
   //For the Medium2 method, you need two steps:
   //1. Figure out if p is inside or on convex hull;
   //2. If p is on convex hull, you can use the same Medium part2 to find the convex hull;
-  //   If o is inside, pick a new p and try again until you get a point on the convex hull;
+  //   If p is inside, pick a new p and try again until you get a point on the convex hull;
 
 
   public List<GO<PV2>> hull (List<GO<PV2>> in) {

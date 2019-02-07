@@ -37,7 +37,13 @@ public class Slow implements Intersecter {
   public List<GO<PV2>> intersect (List<Segment> in) {
     states.clear();
     List<GO<PV2>> out = new ArrayList<GO<PV2>>();
-
+    // Core part of Slow algorithm
+    // This naive algorithm don't even bother sorting the segments as it does not need 
+    // to note down what it has already seen
+    // All it does is to loop through each segment in the input segment list , 
+    // try to examine it against each of the remaning segments in input list for intersections.
+    // The intersetion checks is done by the this.intersect(that) function we wrote. 
+    // if it finds one, use ABintersectsCD to calculate the intersection point and add the point to output-list
     for (int i = 0; i < in.size(); i++) {
       Segment si = in.get(i);
       for (int j = i+1; j < in.size(); j++) {

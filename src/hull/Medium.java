@@ -71,8 +71,9 @@ public class Medium implements Huller {
     GO<PV2> p = in.get(0);
     for (int i = 1; i < in.size(); i++) {
       GO<PV2> q = in.get(i);
-      if (DiffX.sign(p, q) < 0)
+      if (DiffX(p, q).sign()< 0){
         states.add(new MState(out, p, q, null, "GOOD", ""));
+      }
       else {
         states.add(new MState(out, p, q, null, "BAD", ""));
         p = q;

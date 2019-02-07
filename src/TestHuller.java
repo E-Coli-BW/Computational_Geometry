@@ -77,8 +77,8 @@ public class TestHuller extends JFrame implements ActionListener {
     
     //Here you can test your Slow, Medium, Medium2 and Fast methods!
     //Huller huller = new Slow();
-    Huller huller = new Medium();
-    //Huller huller = new Fast();
+    //Huller huller = new Medium();
+    Huller huller = new Fast();
     //Huller huller = new Medium2();
     //Huller huller = new Fast2();
     int iState = -1;
