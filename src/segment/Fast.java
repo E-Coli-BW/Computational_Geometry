@@ -63,11 +63,11 @@ public class Fast implements Intersecter {
 
     public int compareTo (Event that) {
       // EXERCISE 4
-      //Compare the evnets based on y values
+      // Compare the events based on y values
       // Events are ordered by the y coordinate of p.
-      //if this(point) is lower than that(point)
-      //return a negative number
-      //else return a positive number
+      // if this(point) is lower than that(point)
+      // return a negative number
+      // else return a positive number
       return DiffY.sign(this.p,that.p); //
     }
   }
@@ -111,7 +111,7 @@ public class Fast implements Intersecter {
 			GO<PV2> intersection = new ABintersectCD(segA.tail, segA.head, segB.tail, segB.head);
 			out.add(intersection);
 			events.add( new Event(segA,segB,intersection) );
-			states.add( new FSate(null, segA, segB) );	
+			states.add( new FState(null, segA, segB) );	
 		}
 
 	}
@@ -200,7 +200,7 @@ public class Fast implements Intersecter {
 		// the SweepList!!
 		SweepNode nodeB = event.b.node;
 		check( nodeB.getPrevious(), nodeB.getNext() );
-		// Now remove it from the list!
+		// Now remove it from the list! because we are done with it!
 		nodeB.remove();
 
       }
@@ -223,6 +223,12 @@ public class Fast implements Intersecter {
 		SweepNode nodeB = event.a.node;
 		SweepNode nodeA = event.b.node;
 
+    // after we swap it, we need to check with their new neighbors 
+    // original: c a b d
+    // swapped: c b a d 
+    // we need to check cb ( i.e: b.gerPrevious() which in our case sould be a.getPrevious() 
+    // should be checked against b itself, so that's check(nodeA.getPrevious(), nodeA))
+    // same thing for ad !!
 		check(nodeA.getPrevious(), nodeA);
 		check(nodeB, nodeB.getNext());
       }

@@ -8,20 +8,34 @@ import java.util.List;
 
 import acp.*;
 import pv.*;
-import segment.*;
+import polygon.Polygon;
 
-public class TestSegment extends JFrame implements ActionListener {
-  public static void main(String s[]) {
-    new TestSegment();
+public class TestPolygon extends JFrame implements ActionListener {
+  public static void main (String[] args) {
+    new TestPolygon();
   }
 
-  TestSegment () { 
-    super("TestSegment");
-
+  TestPolygon () {
+    super("TestPolygon");
     addWindowListener(new WindowAdapter() {
         public void windowClosing(WindowEvent e) {System.exit(0);}
       });
-    
+    init();
+    pack();
+    setSize(new Dimension(550,250));
+    setVisible(true);
+  }
+
+  static protected JLabel label;
+  static protected JButton button = new JButton("step");
+  static protected JButton buttonC = new JButton("complement");
+  static protected JButton buttonU = new JButton("union");
+  static protected JButton buttonI = new JButton("intersection");
+  static protected JButton buttonD = new JButton("difference");
+  
+  DPanel d;
+  
+  public void init(){
     getContentPane().setLayout(new BorderLayout());
     
     d = new DPanel();
@@ -31,16 +45,20 @@ public class TestSegment extends JFrame implements ActionListener {
     label = new JLabel("Click points then press step repeatedly.");
     getContentPane().add("South", label);
     
-    getContentPane().add("North", button);
     button.addActionListener(this);
-    pack();
-    setSize(new Dimension(550,250));
-    setVisible(true);
+    buttonC.addActionListener(this);
+    buttonU.addActionListener(this);
+    buttonI.addActionListener(this);
+    buttonD.addActionListener(this);
+    JPanel panel = new JPanel();
+    panel.setLayout(new FlowLayout());
+    panel.add(button);
+    panel.add(buttonC);
+    panel.add(buttonU);
+    panel.add(buttonI);
+    panel.add(buttonD);
+    getContentPane().add("North", panel);
   }
-
-  DPanel d;
-  static protected JLabel label;
-  static protected JButton button = new JButton("step");
   
   public void actionPerformed (ActionEvent e) {
     d.actionPerformed(e);
@@ -55,22 +73,36 @@ public class TestSegment extends JFrame implements ActionListener {
       addMouseMotionListener(this);
     }
     
+    int iState = -1;
+    Polygon polygon;
+
     public void actionPerformed (ActionEvent e) {
-      if (++iState == intersecter.numStates())
-        iState = -1;
       repaint();
+      String command = e.getActionCommand();
+      System.out.println("Command: " + command);
+      if (command.equals("union")) {
+        if (polygon == null)
+          polygon = new Polygon(points);
+        else
+          polygon = polygon.union(new Polygon(points));
+        points.clear();
+      }
+      else if (command.equals("step")) {
+        iState++;
+        if (polygon == null || iState == polygon.numStates())
+          iState = -1;
+      }
     }
     
-    List<Segment> segments = new ArrayList<Segment>();
-    GO<PV2> pressed;
-
     // Handles the event of the user pressing down the mouse button.
     public void mousePressed(MouseEvent e){
       GO<PV2> mouse = new InputPoint(e.getX(), e.getY());
       System.out.println("mouse pressed " + e.getX() + " " + e.getY());
       System.out.println("mouse pressed " + mouse.xyz().x.approx() + " " + mouse.xyz().y.approx());
       
-      pressed = mouse;
+      points.add(mouse);
+      iState = -1;
+      repaint();
     }
     
     public void mouseDragged (MouseEvent e) {
@@ -79,23 +111,8 @@ public class TestSegment extends JFrame implements ActionListener {
     public void mouseMoved (MouseEvent e) {
     }
     
-    int iState = -1;
-    //Intersecter intersecter = new Slow();
-    Intersecter intersecter = new Fast();
-    List<GO<PV2>> intersections;
-
     // Handles the event of a user releasing the mouse button.
-    public void mouseReleased(MouseEvent e){
-      GO<PV2> mouse = new InputPoint(e.getX(), e.getY());
-      System.out.println("mouse released " + e.getX() + " " + e.getY());
-      System.out.println("mouse released " + mouse.xyz().x.approx() + " " + mouse.xyz().y.approx());
-      
-      segments.add(new Segment(pressed, mouse));
-      intersections = intersecter.intersect(segments);
-      iState = -1;
-      repaint();
-    }
-
+    public void mouseReleased(MouseEvent e){}
     public void mouseClicked(MouseEvent e){}
     public void mouseExited(MouseEvent e){}
     public void mouseEntered(MouseEvent e){}
@@ -126,14 +143,21 @@ public class TestSegment extends JFrame implements ActionListener {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setStroke(new BasicStroke(1.0f));
       
-      for (Segment s : segments)
-        paintEdge(g2, Color.blue, s.tail.xyz(), s.head.xyz());
+      if (points.size() > 0) {
+        GO<PV2> prevP = points.get(points.size()-1);
+        for (GO<PV2> p : points) {
+          paintEdge(g2, Color.green, prevP.xyz(), p.xyz());
+          prevP = p;
+        }
+      }
 
-      if (iState >= 0)
-        intersecter.getState(iState).draw(g2);
-      else if (intersections != null)
-        for (GO<PV2> p : intersections)
-          drawPoint(g2, p.xyz(), "", 4, Color.green);
+      if (polygon != null) {
+        System.out.println("Drawing polygon.");
+        polygon.draw(g2);
+      }
+
+      if (iState != -1)
+        polygon.getState(iState).draw(g2);
     }
   }
 }

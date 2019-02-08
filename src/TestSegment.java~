@@ -80,8 +80,8 @@ public class TestSegment extends JFrame implements ActionListener {
     }
     
     int iState = -1;
-    //Intersecter intersecter = new Slow();
-    Intersecter intersecter = new Fast();
+    Intersecter intersecter = new Slow();
+    //Intersecter intersecter = new Fast();
     List<GO<PV2>> intersections;
 
     // Handles the event of a user releasing the mouse button.
