@@ -112,7 +112,7 @@ public class Polygon {
       // Use minY and maxY instead of tail and head.
       // Include the case that this and that have the same minY vertex.
       if(that.minY()==this.minY()){
-        return AreaABC.sign(this.minY().p, this.maxY().p, that.maxY().p);
+        return AreaABC.sign(that.maxY().p, that.minY().p, this.maxY().p);
         //if(AreaABC.sign(this.minY().p,this.maxY().p,that.maxY().p)<0){
         //this is on the left of that
         //  return -1;
@@ -122,7 +122,7 @@ public class Polygon {
         //  return 1;
         //}
       }
-      return AreaABC.sign(this.minY().p, this.maxY().p, that.minY().p);
+      return AreaABC.sign(that.maxY().p, that.minY().p, this.minY().p);
       //if(AreaABC.sign(this.minY().p,this.maxY().p,that.minY().p)<0 ){
       //    return -1;
       //}
@@ -189,10 +189,12 @@ public class Polygon {
     // EXERCISE 2
     // Check if from same Polygon too.
     // Add a state after each check.
-    if(e.checked.contains(f)){
-      System.out.println("CHECKED");
-      return;
-    }
+
+    // if(e.checked.contains(f)){
+    //   System.out.println("CHECKED");
+    //   return;
+    // }
+
     e.checked.add(f);
     f.checked.add(e);
     if (e.getPolygon() == f.getPolygon()) {
@@ -206,6 +208,7 @@ public class Polygon {
 
     System.out.println("PROCEEDING");
     GO<PV2> p = new ABintersectCD(e.tail.p, e.head.p, f.tail.p, f.head.p);
+    System.out.println("intersection calculated");
     Vert v = out.new Vert(p, e, f);
     out.verts.add(v);
     events.add(v);
@@ -243,29 +246,22 @@ public class Polygon {
         // EXERCISE 3  X
         // v is intersection of a this edge with a that edge.
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
-        System.out.println(iNode);
-        if( iNode.getNext()!= oNode){
-          System.out.println(iNode.getNext());
-          oNode.swapWithNext();
-        }
-        else{
-          iNode.swapWithNext();
-        }
-
-        check(iNode.getPrevious(),iNode);
-        check(oNode,oNode.getNext());
-
-        // if( iNode.getNext()!= oNode ){
-        //   iNode.swapWithNext();
-        //   check( iNode, iNode.getNext() );
-        //   check( oNode.getPrevious(), oNode);
+        // System.out.println(iNode);
+        // if(iNode.getNext()!= oNode){
+        //   //System.out.println(iNode.getNext());
+        //   // System.out.println(oNode);
+        //   oNode.swapWithNext();
         // }
         // else{
-        //   check( iNode.getPrevious(),iNode );
-        //   check( oNode, oNode.getNext());
+        //   iNode.swapWithNext();
         // }
-        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
         
+        // check(iNode.getPrevious(),iNode);
+        // check(oNode,oNode.getNext());
+        iNode.swapWithNext();
+        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
+        check(iNode.getPrevious(),iNode);
+        check(oNode,oNode.getNext());
 
       }
 
@@ -276,16 +272,20 @@ public class Polygon {
         SweepNode iNode = sweep.add(v.incoming);
         SweepNode oNode = sweep.add(v.outgoing);
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
+        System.out.println("Meet for first time, lines ADDED");
 
         if(iNode.getNext()!=oNode){
 
           check(oNode.getPrevious(),oNode);
           check(iNode,iNode.getNext());
+
         }
 
         else{
+
           check(iNode.getPrevious(),iNode);
-          check(oNode,oNode.getNext());   
+          check(oNode,oNode.getNext());  
+
         }
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
 
@@ -299,60 +299,65 @@ public class Polygon {
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
 
         if(iNode.getNext()!=oNode){
-          // oNode.swapWithNext();
-          check(oNode.getPrevious(), oNode);
-          check(iNode, iNode.getNext());
+
+          check(oNode.getPrevious(), iNode.getNext());
+
+
         }
         else{
-          check(iNode.getPrevious(), iNode);
-          check(oNode, oNode.getNext());          
+
+          check(iNode.getPrevious(), oNode.getNext());
+     
         }
 
+        // After checking, you need to change oNode pointer and make it 
+        // point to iNode
+        // oNode.setData(v.incoming);
+        // //iNode.setData(v.outgoing);
         iNode.remove();
         oNode.remove();
+
+
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
       }
-      // EXERCISE 6  <
+      // EXERCISE 6  i on o
       if (v.incoming.maxY() == v.outgoing.minY() ){
-        SweepNode iNode = sweep.add(v.incoming);
-        // SweepNode iNode = v.incoming.getNode(); 
-        SweepNode oNode = sweep.add(v.outgoing);
-
+        // SweepNode iNode = sweep.add(v.incoming);
+        SweepNode iNode = v.incoming.getNode(); 
+        iNode.setData(v.outgoing);
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
 
-        if(iNode.getNext()!=oNode){
-          // oNode.swapWithNext();
-          check(oNode.getPrevious(), oNode);
-          check(iNode, iNode.getNext());
-        }
-        else{
-          check(iNode.getPrevious(), iNode);
-          check(oNode, oNode.getNext());          
-        }
+        check(iNode.getPrevious(), iNode);
+        check(iNode, iNode.getNext());
 
-        iNode.remove();
-        //oNode.remove();
+          // check(iNode.getPrevious(), iNode);
+          // check(oNode, oNode.getNext());
+          // check(iNode.getPrevious(), oNode.getNext()); 
+
+        // iNode.setData(v.outgoing);
+        // oNode.setData(v.incoming);
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
       }
-      // EXERCISE 7  >
+      // EXERCISE 7  o on i
       if (v.incoming.minY() == v.outgoing.maxY() ){
-        SweepNode iNode = sweep.add(v.incoming);
-        // SweepNode oNode = v.outgoing.getNode(); 
-        SweepNode oNode = sweep.add(v.outgoing);
+        SweepNode oNode = v.outgoing.getNode();
+        check(oNode.getPrevious(), oNode.getNext());
+        // we remove oNode by setting incoming's data to oNode so that oNode is not 
+        // pointing to the original oNode we are about to remove.
+        oNode.setData(v.incoming);
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
 
-        if(iNode.getNext()!=oNode){
-          // oNode.swapWithNext();
-          check(oNode.getPrevious(), oNode);
-          check(iNode, iNode.getNext());
-        }
-        else{
-          check(iNode.getPrevious(), iNode);
-          check(oNode, oNode.getNext());          
-        }
+        check(oNode.getPrevious(), oNode);
+        check(oNode, oNode.getNext());
 
+        // remove the oNode by setting the data of oNode to iNode's data 
+
+          // check(iNode.getPrevious(), iNode);
+          // check(oNode, oNode.getNext());
+          // check(iNode.getPrevious(), oNode.getNext()); 
         // iNode.remove();
-        oNode.remove();
+        // oNode.setData(v.incoming);
+
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
       }
     }
