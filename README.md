@@ -11,9 +11,9 @@ Find intersection points of a list of Segments you draw in the window
 Use Sweepline algorithm
 
 -To find the intersections of Segments, we use a Sweepline to sweep through all the lines drawn by the user. 
- -- For each event our Sweepline encountered, check for possible intersections according to the type of event Sweepline encountered.
- -- The check function itself is using AreaABC.sign() to check for intersections;
- -- If two lines intersects, we have method called ABintersectsCD to calculate the intersection point;
+ 1. For each event our Sweepline encountered, check for possible intersections according to the type of event Sweepline encountered.
+ 2. The check function itself is using AreaABC.sign() to check for intersections;
+ 3. If two lines intersects, we have method called ABintersectsCD to calculate the intersection point;
 -To handle multiple lines scenarios, we use SweepList to **record** and **order** the lines we encounters
 -The ordering is done by the **compareTo** method
 -The sweepline can encounter three different points (which we call events, and we store events in EventList which is initally empty, note that once our EventList is empty again, that means all the operations are done and if our implementation is correct, the program should end and all intersections been found out fully and correctly)
