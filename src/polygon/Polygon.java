@@ -14,8 +14,79 @@ import segment.Drawer;
 import segment.ABintersectCD;
 
 public class Polygon {
+  
+  // Part 4
+  int inout = 0;
+  
+  // If inout is zero, sets it to 2 if bounded polygon, 1 if unbounded.
+  // 2 is rightside in = bounded, 1 is inside out = unbounded
+  // Returns inout.
+  int getInOut() {
+    if (inout == 0) {
+      Vert top = verts.get(0);
+      
+      for (Vert v: verts) {
+        if (DiffY.sign(v.p, top.p) < 0)
+          top = v;
+      }
+      
+      // counterclockwise, inside out, 1
+      if (top.incoming.compareTo(top.outgoing) > 0) {
+        inout = 1;
+      }
+      else { // clockwise, bounded, 2
+        inout = 2;
+      }
+    }
+    return inout;
+  }
+  
+  void copyEdge (Edge e, Vert newMaxY) {
+    // If e.inout == 0, that's an error!  You forgot to set it.
+    if (e.inout == 0) {
+      System.out.println("Error: Edge is not initialized");
+      return;
+    }
+    
+    // If e.inout == 1, it's buried.  Don't copy it to the output.  Just return.
+    if (e.inout == 1) {
+      return;
+    }
+    
+    // If e.minY() is not an output vertex
+      // replace it by an new output vertex (copy of e.minY())
+      // (to create a copy of v use "out.new Vert(v)")
+      // inform its edges
+      // add it to out's list of vertices
+    if ( !out.verts.contains(e.minY()) ) {
+      System.out.println("MinY added!");
+      Vert v = out.new Vert(e.minY());
+      v.informEdges();
+      out.verts.add(v);
+    }
+    
+    // Ditto e.maxY *if* newMaxY is null
+    // Copy e using out.new Edge(e)
+    // If newMaxY is not null, make that the copy's maxY
+    // Add the new edge to out's list.
+    if ( newMaxY == null ) {
+      Vert v = out.new Vert(e.maxY());
+      v.informEdges();
+      out.verts.add(v);
+    }
+    
+    Edge e2 = out.new Edge(e);
+    
+    if (newMaxY != null)
+      e2.setMaxY(newMaxY);
+    
+    e.informVerts();
+    out.edges.add(e2);
+  }
+  
   class PState implements State {
     int nverts; // number of verts in out to display
+    int nedges; // number of edges in out to display
     List<Edge> sedges = new ArrayList<Edge>(); // Sweep edges
     Real y;
     Edge a, b;
@@ -23,6 +94,8 @@ public class Polygon {
     PState (Real y, Edge a, Edge b) {
       if (out != null)
         nverts = out.verts.size();
+      if (out != null)
+        nedges = out.edges.size();
       for (SweepNode n = sweep.getFirst(); n != null; n = n.getNext())
         sedges.add((Edge) n.getData());
       this.y = y;
@@ -42,7 +115,11 @@ public class Polygon {
         Drawer.drawEdge(g, b.tail.p.xyz(), b.head.p.xyz(), Color.red, "");
 
       for (int i = 0; i < nverts; i++)
-        Drawer.drawPoint(g, out.verts.get(i).p.xyz(), Color.red, "");
+        Drawer.drawPoint(g, out.verts.get(i).p.xyz(), Color.black, "");
+      
+      for (int i = 0; i < nedges; i++)
+        Drawer.drawEdge(g,  out.edges.get(i).tail.p.xyz(), 
+            out.edges.get(i).head.p.xyz(), Color.black, "");
 
       if (y != null) {
         PV2 pm = new PV2(Real.constant(-1000), y);
@@ -51,7 +128,7 @@ public class Polygon {
       }
     }
   }
-
+  
   List<State> states = new ArrayList<State>();
 
   public int numStates () { return states.size(); }
@@ -61,7 +138,7 @@ public class Polygon {
     GO<PV2> p;
     Edge incoming, outgoing;
     Vert twin;
-
+    
     Vert (GO<PV2> p, Edge incoming, Edge outgoing) {
       this.p = p;
       this.incoming = incoming;
@@ -69,7 +146,24 @@ public class Polygon {
     }
 
     Polygon getPolygon() { return Polygon.this; }
-
+    
+    // Part 2: copies p, incoming, and outgoing.
+    Vert (Vert that) {
+      this.p = that.p;
+      this.incoming = that.incoming;
+      this.outgoing = that.outgoing;
+    }
+    
+    // Part 2: sets the tail or head of the incoming or outgoing edges
+    // for each Edge, tail is the first input and head is the second input
+    // for each Vertex, incoming.head = outgoing.tail
+    // after reducing the edges due to intersection, reset edges to original value
+    // Part 2: Vert is telling Edges that "I am your incoming head and outgoing tail" 
+    void informEdges() {
+      this.incoming.head = this;
+      this.outgoing.tail = this;
+    }
+    
     void draw (Graphics2D g) {
       Drawer.drawPoint(g, p.xyz(), Color.green, "");
     }
@@ -79,6 +173,7 @@ public class Polygon {
     Vert tail, head;
     SweepNode node;
     Set<Edge> checked = new HashSet<Edge>();
+    int inout; // 2 if outside (not buried in) the other polygon. 1 if inside (buried).
 
     Edge (Vert tail, Vert head) {
       this.tail = tail;
@@ -86,6 +181,34 @@ public class Polygon {
     }
 
     Polygon getPolygon() { return Polygon.this; }
+    
+    // Part 3: copy constructor
+    Edge (Edge that) {
+      this.tail = that.tail;
+      this.head = that.head;
+    }
+    
+    // Part 3: Edge is telling vert that "I am your incoming and outgoing"
+    void informVerts() {
+      this.tail.outgoing = this;
+      this.head.incoming = this;
+    }
+ 
+    // Part 3: replace the current minY vertex (could be head or tail)
+    void setMinY(Vert v) {
+      if (this.head == this.minY())
+        this.head = v;
+      else
+        this.tail = v;
+    }
+    
+    // Part 3: replace the current maxY vertex (could be head or tail)
+    void setMaxY(Vert v) {
+      if (this.head == this.maxY())
+        this.head = v;
+      else
+        this.tail = v;
+    }
 
     void draw (Graphics2D g) {
       Drawer.drawEdge(g, tail.p.xyz(), head.p.xyz(), Color.blue, "");
@@ -111,25 +234,16 @@ public class Polygon {
       // EXERCISE 1
       // Use minY and maxY instead of tail and head.
       // Include the case that this and that have the same minY vertex.
-      if(that.minY()==this.minY()){
+      
+      // if the two Edge objects are on the same vertex, then we compare
+      // that Edge to this.maxY(), because that and this have the same minY()
+      if (this.minY() == that.minY()) {
         return AreaABC.sign(that.maxY().p, that.minY().p, this.maxY().p);
-        //if(AreaABC.sign(this.minY().p,this.maxY().p,that.maxY().p)<0){
-        //this is on the left of that
-        //  return -1;
-        //}
-        //else{
-        //this is on the right of that
-        //  return 1;
-        //}
       }
+      
+      // if two Edge objects are not on the same vertex
+      // this Edge may not be on the same polygon as that Edge
       return AreaABC.sign(that.maxY().p, that.minY().p, this.minY().p);
-      //if(AreaABC.sign(this.minY().p,this.maxY().p,that.minY().p)<0 ){
-      //    return -1;
-      //}
-      //else{
-      //  return 1;
-      //}
-      // return 1;
     }
 
     public SweepNode getNode () { return node; }
@@ -178,8 +292,9 @@ public class Polygon {
   Polygon out;
 
   void check (SweepNode a, SweepNode b) {
-    if (a == null || b == null)
+    if (a == null || b == null) {
       return;
+    }
     
     Edge e = (Edge) a.getData();
     Edge f = (Edge) b.getData();
@@ -189,26 +304,21 @@ public class Polygon {
     // EXERCISE 2
     // Check if from same Polygon too.
     // Add a state after each check.
-
-    // if(e.checked.contains(f)){
-    //   System.out.println("CHECKED");
-    //   return;
-    // }
-
+    
+    if (e.checked.contains(f)) {
+      return;
+    }
+    
     e.checked.add(f);
     f.checked.add(e);
-    if (e.getPolygon() == f.getPolygon()) {
-      System.out.println("SAME");
+    
+    // if the two edges are on the same Polygon object, or if they
+    // don't intersect each other, then don't check for intersection
+    if ( e.getPolygon() == f.getPolygon() || !(e.intersects(f)) ) {
       return;
     }
-    if (!(e.intersects(f))){
-      System.out.println("NOTINTERSECTING");
-      return;
-    }
-
-    System.out.println("PROCEEDING");
+    
     GO<PV2> p = new ABintersectCD(e.tail.p, e.head.p, f.tail.p, f.head.p);
-    System.out.println("intersection calculated");
     Vert v = out.new Vert(p, e, f);
     out.verts.add(v);
     events.add(v);
@@ -218,10 +328,15 @@ public class Polygon {
   public Polygon union (Polygon that) {
     states.clear();
 
-    for (Edge e : this.edges)
+    for (Edge e : this.edges) {
+      e.inout = 0;
       e.checked.clear();
-    for (Edge e : that.edges)
+    }
+    
+    for (Edge e : that.edges) {
+      e.inout = 0;
       e.checked.clear();
+    }
 
     this.that = that;
     out = new Polygon();
@@ -233,141 +348,207 @@ public class Polygon {
 
     while (events.size() > 0) {
       Vert v = events.poll();
-      states.add(new PState(v.p.xyz().y, null, null));
-      System.out.println("WHILING...");
-
       
-      if (v.getPolygon() == out) {                    //  \ /
-        SweepNode iNode = v.incoming.getNode();       //  / \
+      states.add(new PState(v.p.xyz().y, null, null));
+      
+      if (v.getPolygon() == out) {                 //  \ /
+        SweepNode iNode = v.incoming.getNode();    //  / \
         SweepNode oNode = v.outgoing.getNode();
-        // SweepNode iNode = sweep.add(v.incoming);
-        // SweepNode oNode = sweep.add(v.outgoing);
-        // System.out.println("CROSSING");
-        // EXERCISE 3  X
+        System.out.println("X event");
+        // EXERCISE 3
         // v is intersection of a this edge with a that edge.
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
-        // System.out.println(iNode);
-        // if(iNode.getNext()!= oNode){
-        //   //System.out.println(iNode.getNext());
-        //   // System.out.println(oNode);
-        //   oNode.swapWithNext();
-        // }
-        // else{
-        //   iNode.swapWithNext();
-        // }
-        
-        // check(iNode.getPrevious(),iNode);
-        // check(oNode,oNode.getNext());
+           
+        // For intersection, iNode is always to the left of oNode
         iNode.swapWithNext();
-        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
-        check(iNode.getPrevious(),iNode);
-        check(oNode,oNode.getNext());
-
-      }
-
-          
-      // EXERCISE 4  ^
-      if (v.incoming.minY() == v.outgoing.minY()){
-        // if we dont add them to sweep list, there will be NullPointer Exception
-        SweepNode iNode = sweep.add(v.incoming);
-        SweepNode oNode = sweep.add(v.outgoing);
-        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
-        System.out.println("Meet for first time, lines ADDED");
-
-        if(iNode.getNext()!=oNode){
-
-          check(oNode.getPrevious(),oNode);
-          check(iNode,iNode.getNext());
-
-        }
-
-        else{
-
-          check(iNode.getPrevious(),iNode);
-          check(oNode,oNode.getNext());  
-
-        }
-        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
-
-      }
-      // EXERCISE 5  \/
-      if (v.incoming.maxY() == v.outgoing.maxY() ){
-        // SweepNode iNode = sweep.add(v.incoming);
-        // SweepNode oNode = sweep.add(v.outgoing);
-        SweepNode iNode = v.incoming.getNode();    
-        SweepNode oNode = v.outgoing.getNode();
-        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
-
-        if(iNode.getNext()!=oNode){
-
-          check(oNode.getPrevious(), iNode.getNext());
-
-
-        }
-        else{
-
-          check(iNode.getPrevious(), oNode.getNext());
-     
-        }
-
-        // After checking, you need to change oNode pointer and make it 
-        // point to iNode
-        // oNode.setData(v.incoming);
-        // //iNode.setData(v.outgoing);
-        iNode.remove();
-        oNode.remove();
-
-
-        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
-      }
-      // EXERCISE 6  i on o
-      if (v.incoming.maxY() == v.outgoing.minY() ){
-        // SweepNode iNode = sweep.add(v.incoming);
-        SweepNode iNode = v.incoming.getNode(); 
-        iNode.setData(v.outgoing);
-        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
-
+        
         check(iNode.getPrevious(), iNode);
-        check(iNode, iNode.getNext());
-
-          // check(iNode.getPrevious(), iNode);
-          // check(oNode, oNode.getNext());
-          // check(iNode.getPrevious(), oNode.getNext()); 
-
-        // iNode.setData(v.outgoing);
-        // oNode.setData(v.incoming);
-        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
-      }
-      // EXERCISE 7  o on i
-      if (v.incoming.minY() == v.outgoing.maxY() ){
-        SweepNode oNode = v.outgoing.getNode();
-        check(oNode.getPrevious(), oNode.getNext());
-        // we remove oNode by setting incoming's data to oNode so that oNode is not 
-        // pointing to the original oNode we are about to remove.
-        oNode.setData(v.incoming);
-        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
-
-        check(oNode.getPrevious(), oNode);
         check(oNode, oNode.getNext());
+        
+        // Part 8: For the swap event v, for each edge e that swaps
+        // Call copyEdge(e, v)
+        // Set the minY of e to v.
+        // (before changing the inout for the edge)
+        copyEdge(v.incoming, v);
+        copyEdge(v.outgoing, v);
+        v.incoming.setMinY(v);
+        v.outgoing.setMinY(v);
+        v.incoming.inout = 3 - v.incoming.inout;
+        v.outgoing.inout = 3 - v.outgoing.inout;
 
-        // remove the oNode by setting the data of oNode to iNode's data 
+        states.add(new PState(v.p.xyz().y, null, null));
+      }
+      // cannot assume incoming to outgoing is going in clockwise direction
+      // instead, we check v.incoming.node with v.outgoing.node
+      // If v.incoming.node.next == v.outgoing.node, 
+      //   then incoming is to the right of outgoing
+      // If v.incoming.node.next != v.outgoing.node, 
+      //   then incoming is to the left of outgoing
+      else if (v == v.incoming.minY())  { //   /\
+        if (v == v.outgoing.minY()) {     //  /  \
+          System.out.println("^ event");
+          
+          // Part 6: Set inout for both edges based on the 
+          // three possibilities for the edge to the right.  
+          SweepNode left = sweep.add(v.incoming);
+          SweepNode right = sweep.add(v.outgoing);
+          
+          // figure out left and right nodes to prevent 3 branch conditions
+          if (left.getNext() != right) {
+            right = v.incoming.node;
+            left = v.outgoing.node;
+          }
+          
+          check(left.getPrevious(), left);
+          check(right, right.getNext());
+          
+          // case 1: right.next is null
+          // need to check if current polygon is this or that, 
+          // and then set inout to the opposite polygon
+          if (right.getNext() == null) {
+            System.out.println("RIGHT IS NULL");
+            if (v.getPolygon() == that) {
+              System.out.println("this.inout " + this.inout);
+              v.incoming.inout = this.getInOut();
+              v.outgoing.inout = this.getInOut();
+            }
+            else {
+              System.out.println("that.inout " + that.inout);
+              v.incoming.inout = that.getInOut();
+              v.outgoing.inout = that.getInOut();
+            }
+          }
+          else {
+            Edge nextEdge = (Edge) right.getNext().getData();
+            
+            // case 2: if right.next is an edge from the same polygon, copy its inout 
+            if (nextEdge.getPolygon() == v.getPolygon()) {
+              v.incoming.inout = nextEdge.inout;
+              v.outgoing.inout = nextEdge.inout;
+            }
+            // case 3: if right.next is an edge from a different polygon
+            else {
+              // figure out if right.next is rightside out then v is rightside out
+              // otherwise if right.next is inside, then v is inside
+              // 1 is unbounded clockwise, 2 is bounded counterclockwise
+              if (nextEdge.minY() == nextEdge.tail) {
+                v.incoming.inout = 1;
+                v.outgoing.inout = 1;
+              }
+              else {
+                v.incoming.inout = 2;
+                v.outgoing.inout = 2;
+              }
+            }
+          }
+          System.out.println("incoming inout " + v.incoming.inout);
+          System.out.println("outgoing inout " + v.outgoing.inout);
+          states.add(new PState(v.p.xyz().y, null, null));
+        }
+        if (v == v.outgoing.maxY()) {         //   o /  or  \ o
+          // EXERCISE 5                       //   i \      / i
+          System.out.println("< event");
+          SweepNode oNode = v.outgoing.node;  
+          
+          // Part 9: before deleting v.outgoing by setting its data, copy it
+          copyEdge(v.outgoing, null);
+          
+          // in the case where outgoing is on top of incoming
+          // instead of removing node that points to outgoing segment, 
+          // just set it to point to incoming segment
+          oNode.setData(v.incoming);
+          
+          // Part 7: Set inout for the replacement edge (same as the one it replaces).
+          v.incoming.inout = v.outgoing.inout;
 
-          // check(iNode.getPrevious(), iNode);
-          // check(oNode, oNode.getNext());
-          // check(iNode.getPrevious(), oNode.getNext()); 
-        // iNode.remove();
-        // oNode.setData(v.incoming);
+          // after oNode points to incoming, check incoming with its neighbors
+          check(oNode.getPrevious(), oNode);
+          check(oNode, oNode.getNext());
+          
+          states.add(new PState(v.p.xyz().y, null, null));
+        }
+      }
+      else if (v == v.incoming.maxY()) {
+        if (v == v.outgoing.minY()) {         //   i /  or  \ i
+          // EXERCISE 6                       //   o \      / o
+          System.out.println("> event");
+          SweepNode iNode = v.incoming.node;
+          
+          // Part 9: before deleting v.incoming by setting its data, copy it
+          copyEdge(v.incoming, null);
+          
+          // in the case where incoming is on top of outgoing
+          // instead of removing node that points to incoming segment, 
+          // just set it to point to outgoing segment
+          iNode.setData(v.outgoing);
+          
+          // Part 7: Set inout for the replacement edge (same as the one it replaces).
+          v.outgoing.inout = v.incoming.inout;
+          
+          // after iNode points to outgoing, check incoming with its new neighbors
+          check(iNode.getPrevious(), iNode);
+          check(iNode, iNode.getNext());
+          
+          states.add(new PState(v.p.xyz().y, null, null));
+        }
+        if (v == v.outgoing.maxY()) {  //  \  /
+          // EXERCISE 7                //   \/
+          // iNode is to the right of oNode
+          // do we remove both Edges since incoming and outgoing are at the maxY()?
+          System.out.println("V event");
+          SweepNode iNode = v.incoming.node;
+          SweepNode oNode = v.outgoing.node;
+          
+          // if iNode.next is not equal to oNode, 
+          // then iNode is to the right of oNode
+          if (iNode.getNext() != oNode) {
+            check(oNode.getPrevious(), iNode.getNext());
+          }
+          else {
+            check(iNode.getPrevious(), oNode.getNext());
+          }
+          
+          // Part 9: For every other event that removes an edge e 
+          // from the sweep list, call copyEdge(e, null).
+          copyEdge(v.incoming, null);
+          copyEdge(v.outgoing, null);
+          
+          iNode.remove(); 
+          oNode.remove(); 
 
-        states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
+          states.add(new PState(v.p.xyz().y, null, null));
+        }
       }
     }
 
-
-    for (Edge e : this.edges)
+    // Part 5: Make sure you clear all the checked of 
+    // both this and that edges. Also set their inout to zero.
+    for (Edge e : this.edges) {
       e.checked.clear();
-    for (Edge e : that.edges)
+      e.inout = 0;
+    }
+    
+    for (Edge e : that.edges) {
       e.checked.clear();
-
-    return this;
+      e.inout = 0;
+    }
+    
+    // Part 5: At the bottom, use informEdges to restore 
+    // this's and that's head and tail pointers.
+    for (Vert v: this.verts) {
+      v.informEdges();
+    }
+    
+    for (Vert v: that.verts) {
+      v.informEdges();
+    }
+    
+    // Part 5: Use informVerts to set out's incoming and outgoing pointers.
+    for (Edge e: out.edges) {
+      e.informVerts();
+    }
+    
+//     return this;
+    return out;
   }
 }
