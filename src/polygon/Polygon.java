@@ -505,6 +505,7 @@ public class Polygon {
         // point to iNode
         // oNode.setData(v.incoming);
         // //iNode.setData(v.outgoing);
+        // Remove everything, so copyEdge should not copy anything!
         copyEdge(v.incoming, null);
         copyEdge(v.outgoing, null);
 
