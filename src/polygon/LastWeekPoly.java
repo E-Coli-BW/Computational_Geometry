@@ -14,77 +14,8 @@ import segment.Drawer;
 import segment.ABintersectCD;
 
 public class Polygon {
-  int inout = 0;
-
-  // get the inout value of the WHOLE polygon!!!
-  int getInOut() {
-    if (inout == 0) {
-      Vert top = verts.get(0);
-      
-      for (Vert v: verts) {
-        if (DiffY.sign(v.p, top.p) < 0)
-          top = v;
-      }
-      //Let's find if our Polygon is bounded or unbounded!!!
-      if (top.incoming.compareTo(top.outgoing) > 0) {
-        inout = 1;
-      }
-      else { // clockwise, bounded, 2
-        inout = 2;
-      }
-    }
-    return inout;
-  }
-
-
-  void copyEdge (Edge e, Vert newMaxY) {
-    // If e.inout == 0, that's an error!  You forgot to set it.
-    if (e.inout == 0) {
-      System.out.println("Error: Edge is not initialized");
-      return;
-    }
-    
-    // If e.inout == 1, it's buried.  Don't copy it to the output.  Just return.
-    if (e.inout == 1) {
-      return;
-    }
-    
-    // If e.minY() is not an output vertex
-      // replace it by an new output vertex (copy of e.minY())
-      // (to create a copy of v use "out.new Vert(v)")
-      // inform its edges
-      // add it to out's list of vertices
-    
-    // e.minY() is not an output vertex
-    if ( !out.verts.contains(e.minY()) ) {
-      System.out.println("MinY added!");
-      Vert v = out.new Vert(e.minY());
-      v.informEdges();
-      out.verts.add(v);
-    }
-    
-    // Ditto e.maxY *if* newMaxY is null
-    // Copy e using out.new Edge(e)
-    // If newMaxY is not null, make that the copy's maxY
-    // Add the new edge to out's list.
-    if ( newMaxY == null ) {
-      Vert v = out.new Vert(e.maxY());
-      v.informEdges();
-      out.verts.add(v);
-    }
-    
-    Edge e2 = out.new Edge(e);
-    
-    if (newMaxY != null)
-      e2.setMaxY(newMaxY);
-    
-    e.informVerts();
-    out.edges.add(e2);
-  }
-
   class PState implements State {
     int nverts; // number of verts in out to display
-    int nedges;
     List<Edge> sedges = new ArrayList<Edge>(); // Sweep edges
     Real y;
     Edge a, b;
@@ -92,8 +23,6 @@ public class Polygon {
     PState (Real y, Edge a, Edge b) {
       if (out != null)
         nverts = out.verts.size();
-      if (out != null)
-        nedges = out.edges.size();
       for (SweepNode n = sweep.getFirst(); n != null; n = n.getNext())
         sedges.add((Edge) n.getData());
       this.y = y;
@@ -113,11 +42,7 @@ public class Polygon {
         Drawer.drawEdge(g, b.tail.p.xyz(), b.head.p.xyz(), Color.red, "");
 
       for (int i = 0; i < nverts; i++)
-        Drawer.drawPoint(g, out.verts.get(i).p.xyz(), Color.black, "");
-      
-      for (int i = 0; i < nedges; i++)
-        Drawer.drawEdge(g,  out.edges.get(i).tail.p.xyz(), 
-            out.edges.get(i).head.p.xyz(), Color.black, "");
+        Drawer.drawPoint(g, out.verts.get(i).p.xyz(), Color.red, "");
 
       if (y != null) {
         PV2 pm = new PV2(Real.constant(-1000), y);
@@ -144,15 +69,6 @@ public class Polygon {
     }
 
     Polygon getPolygon() { return Polygon.this; }
-    Vert (Vert that) {
-      this.p = that.p;
-      this.incoming = that.incoming;
-      this.outgoing = that.outgoing;
-    }
-    void informEdges() {
-      this.incoming.head = this;
-      this.outgoing.tail = this;
-    }
 
     void draw (Graphics2D g) {
       Drawer.drawPoint(g, p.xyz(), Color.green, "");
@@ -160,7 +76,6 @@ public class Polygon {
   }
 
   class Edge implements SweepData {
-    int inout; // 2 if outside (not buried in) the other polygon. 1 if inside (buried).
     Vert tail, head;
     SweepNode node;
     Set<Edge> checked = new HashSet<Edge>();
@@ -171,31 +86,6 @@ public class Polygon {
     }
 
     Polygon getPolygon() { return Polygon.this; }
-
-    Edge (Edge that) {
-      this.tail = that.tail;
-      this.head = that.head;
-    }
-    void informVerts() {
-      this.tail.outgoing = this;
-      this.head.incoming = this;
-    }
- 
-    // Part 3: replace the current minY vertex (could be head or tail)
-    void setMinY(Vert v) {
-      if (this.head == this.minY())
-        this.head = v;
-      else
-        this.tail = v;
-    }
-    
-    // Part 3: replace the current maxY vertex (could be head or tail)
-    void setMaxY(Vert v) {
-      if (this.head == this.maxY())
-        this.head = v;
-      else
-        this.tail = v;
-    }
 
     void draw (Graphics2D g) {
       Drawer.drawEdge(g, tail.p.xyz(), head.p.xyz(), Color.blue, "");
@@ -325,22 +215,13 @@ public class Polygon {
     states.add(new PState(null, e, f));
   }    
 
-
-
-
-
   public Polygon union (Polygon that) {
     states.clear();
 
-    for (Edge e : this.edges) {
-      e.inout = 0;
+    for (Edge e : this.edges)
       e.checked.clear();
-    }
-
-    for (Edge e : that.edges) {
-      e.inout = 0;
+    for (Edge e : that.edges)
       e.checked.clear();
-    }
 
     this.that = that;
     out = new Polygon();
@@ -354,7 +235,6 @@ public class Polygon {
       Vert v = events.poll();
       states.add(new PState(v.p.xyz().y, null, null));
       System.out.println("WHILING...");
-      System.out.println("YOU BETTER FUCKING WORKING NOW!!!!!!");
 
       
       if (v.getPolygon() == out) {                    //  \ /
@@ -382,20 +262,12 @@ public class Polygon {
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
         check(iNode.getPrevious(),iNode);
         check(oNode,oNode.getNext());
-        copyEdge(v.incoming, v);
-        copyEdge(v.outgoing, v);
-        v.incoming.setMinY(v);
-        v.outgoing.setMinY(v);
-        v.incoming.inout = 3 - v.incoming.inout;
-        v.outgoing.inout = 3 - v.outgoing.inout;
-
-        // states.add(new PState(v.p.xyz().y, null, null));
 
       }
 
           
       // EXERCISE 4  ^
-      else if (v.incoming.minY() == v.outgoing.minY()){
+      if (v.incoming.minY() == v.outgoing.minY()){
         // if we dont add them to sweep list, there will be NullPointer Exception
         SweepNode iNode = sweep.add(v.incoming);
         SweepNode oNode = sweep.add(v.outgoing);
@@ -403,75 +275,18 @@ public class Polygon {
         System.out.println("Meet for first time, lines ADDED");
 
         if(iNode.getNext()!=oNode){
-          oNode=v.incoming.node;
-          iNode=v.outgoing.node;
 
-          // check(oNode.getPrevious(),oNode);
-          // check(iNode,iNode.getNext());
+          check(oNode.getPrevious(),oNode);
+          check(iNode,iNode.getNext());
 
         }
 
-
+        else{
 
           check(iNode.getPrevious(),iNode);
           check(oNode,oNode.getNext());  
-        states.add(new PState(v.p.xyz().y, null, null));
 
-        // this and that are all Polygons!
-        // Note that previously we add this and that polygons' verts to events 
-        //
-        // for (Vert v : this.verts)
-        //   events.offer(v);
-        // for (Vert v : that.verts)
-        //   events.offer(v);
-        //
-        // Now, we don't know which polygon vert(v) is from ! 
-
-
-      if (oNode.getNext() == null) {
-          // System.out.println("RIGHT IS NULL");
-          if (v.getPolygon() == that) {
-              // System.out.println("this.inout " + this.inout);
-              v.incoming.inout = this.getInOut();
-              v.outgoing.inout = this.getInOut();
-            }
-          else {
-              // System.out.println("that.inout " + that.inout);
-              v.incoming.inout = that.getInOut();
-              v.outgoing.inout = that.getInOut();
-            }
-          }
-        else {
-            Edge nextEdge = (Edge) oNode.getNext().getData();
-            
-            // if oNode.next is an edge from the same polygon, that means the edges 
-            // associated with the vertex(v) is from same polygon. This means
-            // I see myself on the right, which means I should have the same inout value as 
-            // the other one I see!  i.e: v's incoming and outgoing's inout should be the same as 
-            // the nextEdge we see!
-          if (nextEdge.getPolygon() == v.getPolygon()) {
-              v.incoming.inout = nextEdge.inout;
-              v.outgoing.inout = nextEdge.inout;
-          }
-            // if not, that means oNode.next is from another polygon! 
-          else {
-              // figure out if oNode.next is out then v is out
-              // otherwise if oNode.next is inside, then v is inside
-              // 1 is unbounded( drawn clockwise ), 2 is bounded ( drawn counterclockwise )
-            if (nextEdge.minY() == nextEdge.tail) {
-                v.incoming.inout = 1; // unbounded, clockwise
-                v.outgoing.inout = 1; // unbounded, clockwise
-              }
-            else {
-                v.incoming.inout = 2; // bounded, counterclockwise
-                v.outgoing.inout = 2; // bounded, counterclockwise
-            }
-          }
         }
-          // System.out.println("incoming inout " + v.incoming.inout);
-          // System.out.println("outgoing inout " + v.outgoing.inout);
-
-
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
 
       }
@@ -499,9 +314,6 @@ public class Polygon {
         // point to iNode
         // oNode.setData(v.incoming);
         // //iNode.setData(v.outgoing);
-        copyEdge(v.incoming, null);
-        copyEdge(v.outgoing, null);
-
         iNode.remove();
         oNode.remove();
 
@@ -511,11 +323,8 @@ public class Polygon {
       // EXERCISE 6  i on o
       if (v.incoming.maxY() == v.outgoing.minY() ){
         // SweepNode iNode = sweep.add(v.incoming);
-        SweepNode iNode = v.incoming.getNode();
-        copyEdge(v.incoming, null); 
-        
+        SweepNode iNode = v.incoming.getNode(); 
         iNode.setData(v.outgoing);
-        v.outgoing.inout = v.incoming.inout;
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
 
         check(iNode.getPrevious(), iNode);
@@ -532,14 +341,10 @@ public class Polygon {
       // EXERCISE 7  o on i
       if (v.incoming.minY() == v.outgoing.maxY() ){
         SweepNode oNode = v.outgoing.getNode();
-        copyEdge(v.outgoing, null);
-
         check(oNode.getPrevious(), oNode.getNext());
         // we remove oNode by setting incoming's data to oNode so that oNode is not 
         // pointing to the original oNode we are about to remove.
         oNode.setData(v.incoming);
-
-        v.incoming.inout = v.outgoing.inout;
         states.add(new PState(v.p.xyz().y, null, null)); // repeat after swap
 
         check(oNode.getPrevious(), oNode);
@@ -558,30 +363,11 @@ public class Polygon {
     }
 
 
-    for (Edge e : this.edges){
+    for (Edge e : this.edges)
       e.checked.clear();
-      e.inout = 0;
-    }
-    
-    for (Edge e : that.edges){
+    for (Edge e : that.edges)
       e.checked.clear();
-      e.inout = 0;
-    }
 
-    for (Vert v: this.verts) {
-      v.informEdges();
-    }
-    
-    for (Vert v: that.verts) {
-      v.informEdges();
-    }
-    
-    // Part 5: Use informVerts to set out's incoming and outgoing pointers.
-    for (Edge e: out.edges) {
-      e.informVerts();
-    }
-
-    // PLEASE RETURN THAT!!! NOT OUT!!! If you return OUT, you ONLY GET THE OUTPUT POINTS!!!
     return this;
-}
+  }
 }
