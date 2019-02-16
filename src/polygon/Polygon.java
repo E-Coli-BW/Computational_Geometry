@@ -384,6 +384,7 @@ public class Polygon {
         check(oNode,oNode.getNext());
         copyEdge(v.incoming, v);
         copyEdge(v.outgoing, v);
+        //After recording the edges to be added, make the change!(change minY to new position!)
         v.incoming.setMinY(v);
         v.outgoing.setMinY(v);
         v.incoming.inout = 3 - v.incoming.inout;
@@ -395,6 +396,8 @@ public class Polygon {
 
           
       // EXERCISE 4  ^
+      // This situation is the MOST DIFFICULT PART AMONG ALL other cases as you need to determine the 
+      // iniital correct inout values!!! 
       else if (v.incoming.minY() == v.outgoing.minY()){
         // if we dont add them to sweep list, there will be NullPointer Exception
         SweepNode iNode = sweep.add(v.incoming);
@@ -458,10 +461,13 @@ public class Polygon {
               // figure out if oNode.next is out then v is out
               // otherwise if oNode.next is inside, then v is inside
               // 1 is unbounded( drawn clockwise ), 2 is bounded ( drawn counterclockwise )
+            // if nextEdge's minY is tail, that means the at the point we inspect, the nextEdge is 
+            // going DOWN(Note we are in Graphical Coordinate!!), which means it's clockwise -> unbounded!
             if (nextEdge.minY() == nextEdge.tail) {
                 v.incoming.inout = 1; // unbounded, clockwise
                 v.outgoing.inout = 1; // unbounded, clockwise
               }
+            // else the other situation
             else {
                 v.incoming.inout = 2; // bounded, counterclockwise
                 v.outgoing.inout = 2; // bounded, counterclockwise
