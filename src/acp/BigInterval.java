@@ -23,6 +23,11 @@ class BigInterval extends Real {
       l = new BigDecimal(x.lb());
       r = new BigDecimal(x.ub());
     }
+    else if (x instanceof ModInterval) {
+      ModInterval m = (ModInterval) x;
+      l = new BigDecimal(m.d.lb());
+      r = new BigDecimal(m.d.ub());
+    }
     else {
       l = ((BigInterval) x).l;
       r = ((BigInterval) x).r;

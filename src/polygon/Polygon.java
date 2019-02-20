@@ -67,7 +67,7 @@ public class Polygon {
     // Copy e using out.new Edge(e)
     // If newMaxY is not null, make that the copy's maxY
     // Add the new edge to out's list.
-    if ( newMaxY == null ) {
+    if (!out.verts.contains(e.maxY()) && newMaxY == null ) {
       Vert v = out.new Vert(e.maxY());
       v.informEdges();
       out.verts.add(v);
@@ -77,8 +77,7 @@ public class Polygon {
     
     if (newMaxY != null)
       e2.setMaxY(newMaxY);
-    
-    e.informVerts();
+
     out.edges.add(e2);
   }
 
@@ -588,7 +587,10 @@ public class Polygon {
       e.informVerts();
     }
 
-    // PLEASE RETURN THAT!!! NOT OUT!!! If you return OUT, you ONLY GET THE OUTPUT POINTS!!!
-    return this;
+    // // PLEASE RETURN THIS!!! NOT OUT!!! If you return OUT, you ONLY GET THE OUTPUT POINTS!!!
+    // return this;
+
+    // For the latest Assignment, we indeed need to return out as we only need the final output of the shape!
+    return out;
 }
 }

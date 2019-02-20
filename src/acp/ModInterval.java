@@ -69,6 +69,8 @@ public class ModInterval extends Real {
     int s = weakSign();
     if (s != 0)
       return s;
+    System.out.println("m " + m[0] + " " + m[1]);
+    System.out.println(d);
     for (int i = 1; i < m.length; i++)
       assert (m[i] == 0) == (m[0] == 0);
     if (m[0] == 0)
@@ -112,7 +114,7 @@ public class ModInterval extends Real {
   static int[] plus (int[] a, int[] b) {
     int[] m = new int[primes.length];
     for (int i = 0; i < 2; i++)
-      m[i] = (a[i] + b[i]) % primes[i];
+      m[i] = (int) (((long) a[i] + (long) b[i]) % primes[i]);
     return m;
   }
 
@@ -126,21 +128,21 @@ public class ModInterval extends Real {
   static int[] minus (int[] a, int[] b) {
     int[] m = new int[primes.length];
     for (int i = 0; i < 2; i++)
-      m[i] = (a[i] - b[i]) % primes[i];
+      m[i] = (int) (((long) a[i] - (long) b[i]) % primes[i]);
     return m;
   }
 
   static int[] times (int[] a, int[] b) {
     int[] m = new int[primes.length];
     for (int i = 0; i < 2; i++)
-      m[i] = (a[i] * b[i]) % primes[i];
+      m[i] = (int) (((long) a[i] * (long) b[i]) % primes[i]);
     return m;
   }
 
   static int[] over (int[] a, int[] b) {
     int[] m = new int[primes.length];
     for (int i = 0; i < 2; i++)
-      m[i] = (a[i] * inverse(b[i], primes[i])) % primes[i];
+      m[i] = (int) (((long) a[i] * (long) inverse(b[i], primes[i])) % primes[i]);
     return m;
   }
 }
