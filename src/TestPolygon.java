@@ -92,6 +92,25 @@ public class TestPolygon extends JFrame implements ActionListener {
         if (polygon == null || iState == polygon.numStates())
           iState = -1;
       }
+      else if (command.equals("complement")) {
+        if (polygon != null)
+          polygon = polygon.complement();
+        points.clear();
+      }
+      else if (command.equals("intersection")) {
+        if (polygon == null)
+          polygon = null;
+        else
+          polygon = polygon.intersection(new Polygon(points));
+        points.clear();
+      }
+      else if (command.equals("difference")) {
+        if (polygon == null)
+          polygon = null;
+        else
+          polygon = polygon.difference(new Polygon(points));
+        points.clear();
+      }
     }
     
     // Handles the event of the user pressing down the mouse button.
@@ -136,7 +155,7 @@ public class TestPolygon extends JFrame implements ActionListener {
       g.fillRect((int)(p.x.approx() - offset),(int)(p.y.approx() - offset),size,size);
       g.drawString(label, (int)(p.x.approx() + offset), (int)(p.y.approx() + offset));
     }
-		
+    
     public void paintComponent(Graphics g){
       super.paintComponent(g);
       Graphics2D g2 = (Graphics2D)g;

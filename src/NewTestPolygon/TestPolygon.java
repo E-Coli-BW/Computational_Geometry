@@ -8,7 +8,7 @@ import java.util.List;
 
 import acp.*;
 import pv.*;
-import polygon.PolygonHS;
+import polygon.Polygon;
 
 public class TestPolygon extends JFrame implements ActionListener {
   public static void main (String[] args) {
