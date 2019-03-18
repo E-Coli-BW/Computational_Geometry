@@ -21,7 +21,8 @@ public class Polygon {
   List<Edge> edges = new ArrayList<Edge>();
   List<State> states = new ArrayList<State>();
 
-  // Prog07, Part 1: Add a new edge list called chords to Polygon.
+
+  // prog07, 1: Add a new edge list called chords to Polygon.
   List<Edge> chords = new ArrayList<Edge>();
   
   public int numStates () { return states.size(); }
@@ -47,196 +48,78 @@ public class Polygon {
   PriorityQueue<Vert> events = new PriorityQueue<Vert>(100, new CompareVerts());
   SweepList sweep = new SlowList();
   Polygon out;
-  
-  // Prog07, Part 4
-  public void monotonize() {
-    // Clear states, events, chords, every Edge helper.
+  // prog 07: 4.1: a public void monotononize and triangulate to Polygon
+  public void monotonize(){
+    // clear states
+    // states is List<State>
     states.clear();
+    // clear events
+    // events is PriorityQueue<Vert>
     events.clear();
+    // clear chords
+    // chords is of List<Edge>
     chords.clear();
-    
-    for (Edge e: edges) {
-      e.helper = null;
+    // clear Edge helper
+    for(Edge e:edges){
+        e.helper=null;
     }
     
-    // Set Edge next and prev fields (how?).
-    // Offer every vert as an event.
-    for (Vert v: verts) {
-      v.incoming.next = v.outgoing;
-      v.outgoing.prev = v.incoming;
+
+    //Set Edge next and prev fields (how?).
+    //incoming's next would be outgoing (we assume we always have incoming on the left)
+    // outgoing's prev would be incoming
+    for(Vert v: verts){
+      v.incoming.next=v.outgoing;
+      v.outgoing.prev=v.incoming;
+    //Offer every vert as an event.
       events.offer(v);
     }
-    
-    while (events.size() > 0) {
-      Vert v = events.poll();
-      states.add(new TState(v.p.xyz().y));
-      
-      if (v.incoming.minY() == v.outgoing.minY())  {
-        // concave = counterclockwise = bad
-        // ^ shape: left edge / = out, right edge \ = in
-        SweepNode left = sweep.add(v.outgoing);
-        SweepNode right = sweep.add(v.incoming);
-        
-        if (v.incoming.isStalactite()) {
-          /* If v is the tip of a stalactite, set the helper of the edge to the
-          right to incoming.  [You can tell if v is a stalactite from the
-          order of incoming and outgoing in the sweep list, but you can
-          double check using your isStalactite method.] */
-          
-          // Here we assume that the edge to the right is incoming.next
-          // v.incoming.setHelper((Edge) v.incoming.getNode().getNext().getData());
-          Edge e = (Edge) right.getNext().getData();
-          e.setHelper(v.incoming);
-        }
-        
-        // Set outgoing's helper to its prev.
-        v.outgoing.setHelper(v.outgoing.prev);
-      }
-      else if (v.incoming.minY() == v.outgoing.maxY())  {
-        // outgoing: out  / or \
-        // incoming: in   \    /
 
-        // in the case where outgoing is on top of incoming
-        // instead of removing node that points to outgoing segment, 
-        // just set it to point to incoming segment
-        SweepNode oNode = v.outgoing.node;  
-        oNode.setData(v.incoming);
-        
-        // Set the helper of the edge to the right to incoming.
-        Edge e = (Edge) oNode.getNext().getData();
-        e.setHelper(v.incoming);
-        
-      }
-      else if (v.incoming.maxY() == v.outgoing.minY())  {
-        // incoming: in   / or \
-        // outgoing: out  \    /
-        
-        // in the case where incoming is on top of outgoing
-        // instead of removing node that points to incoming segment, 
-        // just set it to point to outgoing segment
-        SweepNode iNode = v.incoming.node;
-        iNode.setData(v.outgoing);
-        
-        // Set the helper of incoming to itself.
-        // Set the helper of outgoing to its prev.
-        v.incoming.setHelper(v.incoming);
-        v.outgoing.setHelper(v.outgoing.prev);
-      }
-      else if (v.incoming.maxY() == v.outgoing.maxY()) {
-        // concave = counterclockwise = bad
-        // V shape: left edge \ = in, right edge / = out 
-        
-        SweepNode iNode = v.incoming.node;
-        SweepNode oNode = v.outgoing.node;
-        
-        // Set the helper of incoming to itself.
-        v.incoming.setHelper(v.incoming);
-        
-        // If v is a stalagmite, set the helper of the edge to the right to
-        // outgoing's prev.
-        if (v.incoming.isStalagmite()) {
-          Edge e = (Edge) oNode.getNext().getData();
-          e.setHelper(v.outgoing.prev);
-        }         
-        
-        iNode.remove(); 
-        oNode.remove(); 
-      }
-    }
+
+
+
+
+
   }
-  
-  public void triangulate() {
-    // Prog07, Part 5
-    states.clear();  
-    
-    // Prog07, Part 7
-    // In triangulate, for each edge check if it bounds a triangle (how?)
-    // and if not, find the bottom of its loop (the edge whose head is the
-    // lowest vertex) and call (overloaded) triangulate(bottom).
-    for (Edge e: edges) {
-      if (e.next.next.next == e) {
+  // prog 07: 4.2: a public void monotononize and triangulate to Polygon
+  // this is a triang
+  public void triangulate(){
+    //In triangulate, clear states
+    states.clear();
+    //In triangulate, for each edge check if it bounds a triangle 
+    for(Edge e:edges){
+      //if it bounds a triangle
+      if(e.next.next.next==e){// Found a good triangle! don't need to proceed triangulating!
         continue;
-      }
-      if (e.minY() == e.next.minY()) {
-        System.out.println("found bottom of polygon");
-        triangulate(e);
-      }
+
+      } 
+
+      // if not find the bottom of its loop (the edge whose head is the
+      // lowest vertex) and call (overloaded) triangulate(bottom).
     }
+    //and if not, find the bottom of its loop (the edge whose head is the
+    //lowest vertex) and call (overloaded) triangulate(bottom).
+
   }
-  
-  //Prog07, Part 8
-  // Triangulate(bottom) sets left (=bottom) and right (=bottom.next).
-  // Figures whether it is triangulating on the left or the right
-  // by comparing left.maxY() to right.maxY()
-  // Calls triangulateLeft(left, right) or triangulateRight(left, right).
-  public void triangulate(Edge bottom) {
-    Edge left = bottom;
-    Edge right = bottom.next;
-    
-    if (DiffY.sign(left.maxY().p, right.maxY().p) < 0) {
-      System.out.println("Triangulate Left");
-      triangulateLeft(left, right);
-    }
-    
-    if (DiffY.sign(left.maxY().p, right.minY().p) > 0)  {
-      System.out.println("Triangulate Right");
-      triangulateRight(left, right);
-    }
-  }
-  
-  public void triangulateLeft(Edge left, Edge right) {
-    
-    Edge current = left.prev;
-    
-    /* outer while loop:
-     *   if left.head > right.head and left.tail < right.head,
-     *   we need to switch to triangulate-right and check for convex 
-     *   instead of concave
-     * 
-     *   if left and left.prev form a convex angle /\, it is good
-     *     left = left.prev
-     *
-     *   otherwise if they form a concave angle \/, it is bad
-     *     nextVert = left.head
-     *     inner while loop: while current-left != right
-     *       left = left.next (move to next edge)
-     *       nextVert = left.head
-     *       add chord with vertices left.prev.tail and nextVert
-     */
-    
-    // TODO: resolve an infinite loop error: use two counters to test
-    // both the outer and inner while loops
-    while (DiffY.sign(current.tail.p, right.head.p) < 0) {
-      
-      // check the angle between left.prev and left.prev.next.tail
-      // if it is concave then we need to add chords and triangulate
-      // until we get to original left edge
-      Edge edge = current;
-      
-      /*
-      while (AreaABC.sign(edge.tail.p, edge.head.p, edge.next.head.p) > 0) { 
-        if (edge == left) {
-          break;
-        }
-        
-        Edge prev = edge.prev;
-        Edge next = edge.next;
-        
-        prev.addChordHeads(next);
-        
-        edge = edge.prev.twin;
-      }
-      */
-      
-      // move to the previous edge
-      current = current.prev;
-    }
-  }
-  
-  public void triangulateRight(Edge left, Edge right) {
-    
+  // prog 07: 8.1: Triangulate(bottom) sets left (=bottom) and right (=bottom.next).
+
+   // Figures whether it is triangulating on the left or the right
+   // by comparing left.maxY() to right.maxY()
+
+   // Calls triangulateLeft(left, right) or triangulateRight(left, right).
+
+  // @overrided triangulate method
+  public void triangulate(Edge bottom){
+
   }
 
+  public void triangulateRight(Edge left, Edge right){
+
+  }
+
+  public void triangulateLeft(Edge left, Edge right){
+
+  }
   // Prog05, Part 4
   int inout = 0;
   
@@ -308,44 +191,7 @@ public class Polygon {
     return out;
   }
   
-  // Prog06, Part 7:
-  // Create a public complement method which returns the complement. 
-  // NOTE: Dr. Milenkovic said in class to make a copy and then invert.
-  public Polygon complement() {
-    Polygon complement = this.copy();
-    complement.invert();
 
-    return complement;
-  }
-  
-  // Prog06, Part 8:
-  // Create the intersection and difference methods
-  // Intersection: By DeMorgan's Law, the
-  // complement(A intersect B) = complement(A) union complement(B)
-  // Then, A intersect B = complement(complement(A union B))
-  public Polygon intersection(Polygon that) {
-    this.invert();
-    that.invert();
-    
-    out = this.union(that);
-    out.invert();
-    
-    this.invert();
-    that.invert();
-    
-    return out;
-  }
-  
-  // Prog06, Part 8:
-  // A - B = A.intersection(complement(B))
-  // A - B = complement(complement(A) union B)
-  public Polygon difference(Polygon that) {
-    that.invert();
-    out = this.intersection(that);
-    that.invert();
-    
-    return out;
-  }
   
   void copyEdge (Edge e, Vert newMaxY) {
     // If e.inout == 0, that's an error!  You forgot to set it.
@@ -435,7 +281,7 @@ public class Polygon {
     }
   }
   
-  // Prog07, Part 1: TriangulateState
+  // prog07: 1.4: Add a new state class:
   class TState implements State {
     int nchords; // number of chords to display
     List<Edge> sedges = new ArrayList<Edge>(); // Sweep edges
@@ -464,6 +310,9 @@ public class Polygon {
       }
     }
   }
+
+
+
 
   class Vert {
     GO<PV2> p;
@@ -508,116 +357,54 @@ public class Polygon {
     Set<Edge> checked = new HashSet<Edge>();
     int inout; // 2 if outside (not buried in) the other polygon. 1 if inside (buried).
     
-    // Prog07, Part 2
+    // prog07,2.1,2.2,2.3
     Edge prev, next, twin;
+    //prog07, 2.4 isStalagmite and isStalactite
+    boolean isStalagmite(){
+      return true;
+    }
     
-    // Prog07, Part 3
+    boolean isStalactite(){
+      return true;
+    }
+    // Prog07, 3.1, a helper Edge
     Edge helper;
     
     Edge (Vert tail, Vert head) {
       this.tail = tail;
       this.head = head;
     }
-    
-    // Prog07, Part 3
+    // Prog07, 3.2, a setHelper method
     void setHelper (Edge newHelper) {
       if (helper != null && 
           (helper.isStalagmite() || newHelper.isStalactite()))
         helper.addChord(newHelper);
       helper = newHelper;
     }
-    
-    // Prog07, Part 3
-    // a is this and c is that
-    // Create e and f and make them twins.
-    // a.next = e, e.prev = a, etc.
-    void addChord (Edge that) {
-      
-      Edge e = new Edge(this.head, that.head);
-      Edge f = new Edge(that.head, this.head);;
-      e.twin = f;
-      f.twin = e;
-      
-      Edge b = this.next;
-      Edge d = that.next;
-      
-      // first polygon
-      this.next = e;
-      e.prev = this;
-      
-      e.next = d;
-      d.prev = e;
-      
-      // second polygon
-      that.next = f;
-      f.prev = that;
-      
-      f.next = b;
-      b.prev = f;
-      
-      chords.add(e);
+
+    // Prog07, 3.3: an addCHord method
+    void addChord(Edge that){
+   //       Look at the figures (notes) to see how it works:
+      // Edge e=this.next
+   // a is this and c is that
+
+   // Create e and f and make them twins.
+
+   // a.next = e, e.prev = a, etc.
+
     }
-    
-    // Prog07, Part 6
-    // Create addChordHeads that calls addChords.
-    public void addChordHeads(Edge that) {
-      this.addChord(that);
+    // Prog07, 6.1: Create addChordHeads that calls addChords.
+    void addChordsHeads(){
+
     }
-    
-    // Prog07, Part 6
-    // Create addChordTails that creates a chord from the tail of this to
-    // the tail of that.
-    public void addChordTails(Edge that) {
-      
-      Edge e = new Edge(this.tail, that.tail);
-      Edge f = new Edge(that.tail, this.tail);
-      e.twin = f;
-      f.twin = e;
-      
-      Edge b = this.next;
-      Edge d = this.prev;
-      
-      b.next = f;
-      f.prev = b;
-      
-      f.next = this;
-      this.next = f;
-      
-      d.next = e;
-      e.prev = d;
-      
-      e.next = that;
-      that.prev = e;
-      
-      chords.add(e);
+
+    // Prog07, 6.2:Create addChordTails that creates a chord from the tail of this to
+    //the tail of that.
+
+    void addChordsTails(){
+
     }
-    
-    // Prog07, Part 2
-    // Is the head of this edge the tip of a stalagmite or stalactite?
-    
-    // Stalagmite is always a maxY/maxY event
-    // In the picture drawing, a stalagmite occurs at an ^ shape
-    // On the screen we flip across x-axis so a stalagmite occurs at a V shape
-    boolean isStalagmite() {
-      if (head == maxY() && head == head.outgoing.maxY()) {
-        if (AreaABC.sign(tail.p, head.p, head.outgoing.head.p) < 0) {
-            return true;
-        }
-      }
-      return false;
-    }
-    
-    // Stalactite is always a minY/minY event
-    // In the picture drawing, a stalactite occurs at a V shape
-    // On the screen we flip across x-axis so a stalactite occurs at a ^ shape
-    boolean isStalactite() {
-      if (head == minY() && head == head.outgoing.minY()) {
-        if (AreaABC.sign(tail.p, head.p, head.outgoing.head.p) < 0) {
-            return true;
-        }
-      }
-      return false;
-    }
+
 
     Polygon getPolygon() { return Polygon.this; }
     
@@ -656,8 +443,8 @@ public class Polygon {
       Drawer.drawEdge(g, tail.p.xyz(), head.p.xyz(), Color.blue, "");
     }
     
-    // Prog06, Part 3
-    // Add a draw with color method to Edge:
+// prog07:1.2 Add a new draw method to Edge that takes a color.
+
     void draw (Graphics2D g, Color color) {
       Drawer.drawEdge(g, tail.p.xyz(), head.p.xyz(), color, "");
     }
@@ -736,7 +523,7 @@ public class Polygon {
       }
     }
     
-    // Prog07, Part 1: In Polygon.draw, draw the chords green.
+    // Prog07, 1.3: In Polygon.draw, draw the chords green.
     if (chords != null) {
       for (Edge e: chords) {
         e.draw(g, Color.green);
@@ -783,6 +570,46 @@ public class Polygon {
     events.add(v);
     states.add(new PState(null, e, f));
   }    
+
+  // Prog06, Part 7:
+  // Create a public complement method which returns the complement. 
+  // NOTE: Dr. Milenkovic said in class to make a copy and then invert.
+  public Polygon complement() {
+    Polygon complement = this.copy();
+    complement.invert();
+
+    return complement;
+  }
+  
+  // Prog06, Part 8:
+  // Create the intersection and difference methods
+  // Intersection: By DeMorgan's Law, the
+  // complement(A intersect B) = complement(A) union complement(B)
+  // Then, A intersect B = complement(complement(A union B))
+  public Polygon intersection(Polygon that) {
+    this.invert();
+    that.invert();
+    
+    out = this.union(that);
+    out.invert();
+    
+    this.invert();
+    that.invert();
+    
+    return out;
+  }
+  
+  // Prog06, Part 8:
+  // A - B = A.intersection(complement(B))
+  // A - B = complement(complement(A) union B)
+  public Polygon difference(Polygon that) {
+    that.invert();
+    out = this.intersection(that);
+    that.invert();
+    
+    return out;
+  }
+
 
   public Polygon union (Polygon that) {
     out = new Polygon();

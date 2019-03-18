@@ -32,8 +32,6 @@ public class TestPolygon extends JFrame implements ActionListener {
   static protected JButton buttonU = new JButton("union");
   static protected JButton buttonI = new JButton("intersection");
   static protected JButton buttonD = new JButton("difference");
-  static protected JButton buttonM = new JButton("monotonize");
-  static protected JButton buttonT = new JButton("triangulate");
   
   DPanel d;
   
@@ -52,8 +50,6 @@ public class TestPolygon extends JFrame implements ActionListener {
     buttonU.addActionListener(this);
     buttonI.addActionListener(this);
     buttonD.addActionListener(this);
-    buttonM.addActionListener(this);
-    buttonT.addActionListener(this);
     JPanel panel = new JPanel();
     panel.setLayout(new FlowLayout());
     panel.add(button);
@@ -61,8 +57,6 @@ public class TestPolygon extends JFrame implements ActionListener {
     panel.add(buttonU);
     panel.add(buttonI);
     panel.add(buttonD);
-    panel.add(buttonM);
-    panel.add(buttonT);
     getContentPane().add("North", panel);
   }
   
@@ -117,12 +111,6 @@ public class TestPolygon extends JFrame implements ActionListener {
           polygon = polygon.difference(new Polygon(points));
         points.clear();
       }
-      else if (command.equals("monotonize")) {
-        polygon.monotonize();
-      }
-      else if (command.equals("triangulate")) {
-        polygon.triangulate();
-      }
     }
     
     // Handles the event of the user pressing down the mouse button.
@@ -167,7 +155,7 @@ public class TestPolygon extends JFrame implements ActionListener {
       g.fillRect((int)(p.x.approx() - offset),(int)(p.y.approx() - offset),size,size);
       g.drawString(label, (int)(p.x.approx() + offset), (int)(p.y.approx() + offset));
     }
-		
+    
     public void paintComponent(Graphics g){
       super.paintComponent(g);
       Graphics2D g2 = (Graphics2D)g;

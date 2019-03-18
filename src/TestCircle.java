@@ -5,18 +5,20 @@ import java.awt.geom.*;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import acp.*;
 import pv.*;
-import polygon.Polygon;
+import circle.Circle;
+import circle.SmallestCircle;
 
-public class TestPolygon extends JFrame implements ActionListener {
+public class TestCircle extends JFrame implements ActionListener {
   public static void main (String[] args) {
-    new TestPolygon();
+    new TestCircle();
   }
 
-  TestPolygon () {
-    super("TestPolygon");
+  TestCircle () {
+    super("TestCircle");
     addWindowListener(new WindowAdapter() {
         public void windowClosing(WindowEvent e) {System.exit(0);}
       });
@@ -26,14 +28,14 @@ public class TestPolygon extends JFrame implements ActionListener {
     setVisible(true);
   }
 
+
   static protected JLabel label;
   static protected JButton button = new JButton("step");
-  static protected JButton buttonC = new JButton("complement");
-  static protected JButton buttonU = new JButton("union");
-  static protected JButton buttonI = new JButton("intersection");
-  static protected JButton buttonD = new JButton("difference");
-  static protected JButton buttonM = new JButton("monotonize");
-  static protected JButton buttonT = new JButton("triangulate");
+  static protected JButton button2 = new JButton("two");
+  static protected JButton button3 = new JButton("three");
+  static protected JButton buttonI = new JButton("inside");
+  static protected JButton buttonS = new JButton("smallest");
+  static protected JButton buttonR = new JButton("randomize");
   
   DPanel d;
   
@@ -48,21 +50,19 @@ public class TestPolygon extends JFrame implements ActionListener {
     getContentPane().add("South", label);
     
     button.addActionListener(this);
-    buttonC.addActionListener(this);
-    buttonU.addActionListener(this);
+    button2.addActionListener(this);
+    button3.addActionListener(this);
     buttonI.addActionListener(this);
-    buttonD.addActionListener(this);
-    buttonM.addActionListener(this);
-    buttonT.addActionListener(this);
+    buttonS.addActionListener(this);
+    buttonR.addActionListener(this);
     JPanel panel = new JPanel();
     panel.setLayout(new FlowLayout());
     panel.add(button);
-    panel.add(buttonC);
-    panel.add(buttonU);
+    panel.add(button2);
+    panel.add(button3);
     panel.add(buttonI);
-    panel.add(buttonD);
-    panel.add(buttonM);
-    panel.add(buttonT);
+    panel.add(buttonS);
+    panel.add(buttonR);
     getContentPane().add("North", panel);
   }
   
@@ -79,59 +79,78 @@ public class TestPolygon extends JFrame implements ActionListener {
       addMouseMotionListener(this);
     }
     
+    Circle circle = null;
+    SmallestCircle smallest = new SmallestCircle();
+    // Huller huller = new Fast();
+    // Huller huller = new Medium();
+    // Huller huller = new Slow();
     int iState = -1;
-    Polygon polygon;
+    String command = "two";    
+
+    Random random = new Random(1);
 
     public void actionPerformed (ActionEvent e) {
       repaint();
-      String command = e.getActionCommand();
+      command = e.getActionCommand();
       System.out.println("Command: " + command);
-      if (command.equals("union")) {
-        if (polygon == null)
-          polygon = new Polygon(points);
-        else
-          polygon = polygon.union(new Polygon(points));
-        points.clear();
-      }
-      else if (command.equals("step")) {
+      if (command.equals("step")) {
         iState++;
-        if (polygon == null || iState == polygon.numStates())
+        if (circle == null || iState == smallest.numStates())
           iState = -1;
       }
-      else if (command.equals("complement")) {
-        if (polygon != null)
-          polygon = polygon.complement();
-        points.clear();
-      }
-      else if (command.equals("intersection")) {
-        if (polygon == null)
-          polygon = null;
-        else
-          polygon = polygon.intersection(new Polygon(points));
-        points.clear();
-      }
-      else if (command.equals("difference")) {
-        if (polygon == null)
-          polygon = null;
-        else
-          polygon = polygon.difference(new Polygon(points));
-        points.clear();
-      }
-      else if (command.equals("monotonize")) {
-        polygon.monotonize();
-      }
-      else if (command.equals("triangulate")) {
-        polygon.triangulate();
+      if (command.equals("randomize")) {
+        for (int i = points.size() - 1; i > 0; i--) {
+          int j = random.nextInt(i + 1);
+          GO<PV2> temp = points.get(i);
+          points.set(i, points.get(j));
+          points.set(j, temp);
+        }
+        if (points.size() >= 2)
+          circle = smallest.smallestCircle(points);
       }
     }
     
     // Handles the event of the user pressing down the mouse button.
     public void mousePressed(MouseEvent e){
       GO<PV2> mouse = new InputPoint(e.getX(), e.getY());
-      System.out.println("mouse pressed " + e.getX() + " " + e.getY());
-      System.out.println("mouse pressed " + mouse.xyz().x.approx() + " " + mouse.xyz().y.approx());
+      // System.out.println("mouse pressed " + e.getX() + " " + e.getY());
+      // System.out.println("mouse pressed " + mouse.xyz().x.approx() + " " + mouse.xyz().y.approx());
       
       points.add(mouse);
+      /*
+      if (points.size() == 2)
+        circle = new Circle(points.get(0), points.get(1));
+      else if (points.size() >= 3)
+        circle = new Circle(points.get(points.size()-3),
+                            points.get(points.size()-2),
+                            points.get(points.size()-1));
+      */
+      if (command.equals("two")) {
+        while (points.size() > 2)
+          points.remove(0);
+        if (points.size() == 2)
+          circle = new Circle(points.get(0), points.get(1));
+        else
+          circle = null;
+      }
+      else if (command.equals("three")) {
+        while (points.size() > 3)
+          points.remove(0);
+        if (points.size() == 3)
+          circle = new Circle(points.get(0), points.get(1), points.get(2));
+        else
+          circle = null;
+      }
+      else if (command.equals("inside")) {
+        if (circle == null)
+          System.out.println("circle is null");
+        else if (circle.contains(points.get(points.size()-1)))
+          System.out.println("inside");
+        else
+          System.out.println("outside");
+      }
+      else if (points.size() >= 2)
+        circle = smallest.smallestCircle(points);
       iState = -1;
       repaint();
     }
@@ -174,21 +193,17 @@ public class TestPolygon extends JFrame implements ActionListener {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setStroke(new BasicStroke(1.0f));
       
-      if (points.size() > 0) {
-        GO<PV2> prevP = points.get(points.size()-1);
-        for (GO<PV2> p : points) {
-          paintEdge(g2, Color.green, prevP.xyz(), p.xyz());
-          prevP = p;
-        }
-      }
+      int i = 0;
+      for (GO<PV2> p : points)
+        drawPoint(g2, p.xyz(), "" + i++, 4, Color.black);
 
-      if (polygon != null) {
-        System.out.println("Drawing polygon.");
-        polygon.draw(g2);
-      }
+      if (circle != null)
+        circle.draw(g2, Color.green);
 
-      if (iState != -1)
-        polygon.getState(iState).draw(g2);
+      if (0 <= iState && iState < smallest.numStates()) {
+        System.out.println("iState " + iState);
+        smallest.getState(iState).draw(g2);
+      }
     }
   }
 }
