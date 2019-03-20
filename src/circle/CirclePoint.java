@@ -14,6 +14,7 @@ public class CirclePoint extends Predicate {
 
   protected Real calculate () {
     PV2 cp = p.xyz().minus(c.center());
+    // radius2 is r^2
     Real r2 = c.radius2();
 
     // EXERCISE
@@ -22,7 +23,7 @@ public class CirclePoint extends Predicate {
 
 
 
-    return r2; // wrong!
+    return cp.dot(cp).minus(r2); 
   }
 
   public static int sign (Circle c, GO<PV2> p) {

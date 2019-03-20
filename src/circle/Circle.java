@@ -5,6 +5,7 @@ import java.awt.Color;
 import acp.*;
 import pv.*;
 import segment.*;
+import java.util.ArrayList;
 
 public class Circle extends GO<PV2Scalar> {
   GO<PV2> a, b, c;
@@ -22,6 +23,8 @@ public class Circle extends GO<PV2Scalar> {
     this.b = b;
     this.c = c;
   }
+
+
 
   public PV2Scalar calculate () {
     PV2 center;
