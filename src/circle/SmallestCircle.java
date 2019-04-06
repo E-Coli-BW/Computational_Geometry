@@ -87,6 +87,7 @@ public class SmallestCircle {
     for(int k=0;k<n;k++){
       if( !circle.contains( points.get(k) ) ){
         circle = new Circle(a,b,points.get(k));
+        states.add(new CState(circle));
       }
     }
     return circle;
