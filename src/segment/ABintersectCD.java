@@ -34,4 +34,9 @@ public class ABintersectCD extends GO<PV2> {
                         " cp x cd " + p.minus(pc).cross(vcd));
     return p;
   }
+
+  public GO<PV2> getIntersection(){
+
+    return new GO<PV2>(this.calculate());
+  }
 }

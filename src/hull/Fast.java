@@ -120,16 +120,17 @@ public class Fast implements Huller {
       }
 
       if(AreaABC.sign(p,q,r) > 0){
+        // states.add(new FState(out, p, q, r, "GOOD", ""));
         p=q;
         q=r;
         out.add(r);
-        states.add(new FState(out, p, q, r, "GOOD", ""));
+        states.add(new FState(out, q, p, r, "GOOD", ""));
       }
       else{
         do{
           //remove q
           out.remove(out.size()-1);
-          states.add(new FState(out, p, q, r, "BAD", ""));
+          states.add(new FState(out, q, p, r, "BAD", ""));
           if(out.size()>=2){
           q=out.get(out.size()-1);
           p=out.get(out.size()-2); 
@@ -169,13 +170,13 @@ public class Fast implements Huller {
         p=q;
         q=r;
         out.add(r);
-        states.add(new FState(out, p, q, r, "GOOD", ""));
+        states.add(new FState(out, q, p, r, "GOOD", ""));
       }
       else{
         do{
           //remove q
           out.remove(out.size()-1);
-          states.add(new FState(out, p, q, r, "BAD", ""));
+          states.add(new FState(out, q, p, r, "BAD", ""));
           if(out.size()>=2){
           q=out.get(out.size()-1);
           p=out.get(out.size()-2); 

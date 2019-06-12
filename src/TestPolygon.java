@@ -32,6 +32,8 @@ public class TestPolygon extends JFrame implements ActionListener {
   static protected JButton buttonU = new JButton("union");
   static protected JButton buttonI = new JButton("intersection");
   static protected JButton buttonD = new JButton("difference");
+  static protected JButton buttonM = new JButton("monotonize");
+  static protected JButton buttonT = new JButton("triangulate");
   
   DPanel d;
   
@@ -50,6 +52,8 @@ public class TestPolygon extends JFrame implements ActionListener {
     buttonU.addActionListener(this);
     buttonI.addActionListener(this);
     buttonD.addActionListener(this);
+    buttonM.addActionListener(this);
+    buttonT.addActionListener(this);
     JPanel panel = new JPanel();
     panel.setLayout(new FlowLayout());
     panel.add(button);
@@ -57,6 +61,8 @@ public class TestPolygon extends JFrame implements ActionListener {
     panel.add(buttonU);
     panel.add(buttonI);
     panel.add(buttonD);
+    panel.add(buttonM);
+    panel.add(buttonT);
     getContentPane().add("North", panel);
   }
   
@@ -88,9 +94,36 @@ public class TestPolygon extends JFrame implements ActionListener {
         points.clear();
       }
       else if (command.equals("step")) {
+        System.out.println("yo!");
         iState++;
         if (polygon == null || iState == polygon.numStates())
           iState = -1;
+      }
+      else if (command.equals("complement")) {
+        if (polygon != null)
+          polygon = polygon.complement();
+        points.clear();
+      }
+      else if (command.equals("intersection")) {
+        if (polygon == null)
+          polygon = null;
+        else
+          polygon = polygon.intersection(new Polygon(points));
+        points.clear();
+      }
+      else if (command.equals("difference")) {
+        if (polygon == null)
+          polygon = null;
+        else
+          polygon = polygon.difference(new Polygon(points));
+        points.clear();
+      }
+      else if (command.equals("monotonize")) {
+        polygon.monotonize();
+        // points.clear();
+      }
+      else if (command.equals("triangulate")) {
+        polygon.triangulate();
       }
     }
     

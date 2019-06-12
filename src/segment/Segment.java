@@ -37,6 +37,12 @@ public class Segment implements Comparable<Segment> {
     //AreaABC.sign(that.head,that.tail,this.head)*AreaABC.sign(that.head,that.tail,this.tail)<0 ;    
     
     //return false;
+      return (AreaABC.sign(this.head,this.tail,that.tail) !=
+              AreaABC.sign(this.head,this.tail,that.head)
+              &&
+              AreaABC.sign(that.head,that.tail,this.head) !=
+              AreaABC.sign(that.head,that.tail,this.tail));
+    
   }
 
   GO<PV2> intersection (Segment that) {

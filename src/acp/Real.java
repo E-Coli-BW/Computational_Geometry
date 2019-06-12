@@ -8,7 +8,7 @@ public abstract class Real {
   static boolean handleSignException = true;
   static boolean throwPrecisionException = true;
 
-  protected static Random random = new Random();
+  protected static Random random = new Random(17);
   private static double random1 () {
     return random.nextDouble() * 2 - 1;
   }
