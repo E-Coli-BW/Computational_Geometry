@@ -94,6 +94,7 @@ public class TestPolygon extends JFrame implements ActionListener {
         points.clear();
       }
       else if (command.equals("step")) {
+        System.out.println("yo!");
         iState++;
         if (polygon == null || iState == polygon.numStates())
           iState = -1;
@@ -119,6 +120,7 @@ public class TestPolygon extends JFrame implements ActionListener {
       }
       else if (command.equals("monotonize")) {
         polygon.monotonize();
+        // points.clear();
       }
       else if (command.equals("triangulate")) {
         polygon.triangulate();

@@ -80,7 +80,7 @@ public class Delaunay {
       // Return false if p is on the wrong side of an edge.
       // How to test contains?
       // For a counter-clockwise triangle, a point is inside the triangle if 
-      // it is to the left of every edge--> pab, pbc and pca then should all be negative 
+      // it is to the left of every edge--> pab, pbc and pca then should all be positive 
       // if p is inside triangle ABC
       return AreaABC.sign(p,this.v[0],this.v[1])>0 && AreaABC.sign(p,this.v[1],this.v[2])>0 && AreaABC.sign(p,this.v[2],this.v[0])>0;
     }

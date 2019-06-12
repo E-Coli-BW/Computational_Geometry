@@ -7,7 +7,8 @@ import java.util.HashSet;
 import java.util.Comparator;
 import java.awt.Graphics2D;
 import java.awt.Color;
-
+import java.util.HashMap; 
+import java.util.Map; 
 import acp.*;
 import pv.*;
 import hull.State;
@@ -74,32 +75,109 @@ public class Polygon {
     //Offer every vert as an event.
       events.offer(v);
     }
+    // while we still have vertex to be evaluated
+    // i.e: Priority Queue(Prioritized by height) "events" is not empty
+    // evaluate each vertex 
+    while(events.size()>0){
+      // pull out a vertex for examination
+      // poll:returns the element at the front
+      Vert v = events.poll();
+      // each vertex has a point, each point has xyz coordinates
+      // in xyz coordinates, we can get its y coordinate
+      // states keeps a list of TStates ordered by y-coordinate value
+      states.add(new TState(v.p.xyz().y));
+      if (v.incoming.minY()==v.outgoing.minY()){
+        // ^ shape, deem CCW be bad
+        // a Sweep node is a pointer that points to a vertex
+        // that has info about the incoming and outgoing edges
+        SweepNode left=sweep.add(v.outgoing);
+        SweepNode right=sweep.add(v.incoming);
+        // isStalactite is bad
+        if(v.incoming.isStalactite()){
+          // note that a helper edge is just a copy ofthe previously detexted incoming
+          // edge of a bad vertex
+          Edge e = (Edge) right.getNext().getData();
+          e.setHelper(v.incoming);
+        }
+        v.outgoing.setHelper(v.outgoing.prev);
+      }
+      else if (v.incoming.minY() == v.outgoing.maxY()){
+        // / or \ out up in down
+        // \    /
+        SweepNode oNode = v.outgoing.node;
+        // SweepNode iNode = v.incoming.node;
+        oNode.setData(v.incoming);
+        Edge e = (Edge) oNode.getNext().getData();
+        e.setHelper(v.incoming);
+      }
+      else if (v.incoming.maxY() == v.outgoing.minY()){
+        // / or \ out down in up
+        // \    / 
+        SweepNode iNode = v.incoming.node;
+        iNode.setData(v.outgoing);
+
+        v.incoming.setHelper(v.incoming);
+        v.outgoing.setHelper(v.outgoing.prev);
+      }
+      else if (v.incoming.maxY() == v.outgoing.maxY()){
+        // \ / condition left in right out
+        SweepNode iNode = v.incoming.node;
+        SweepNode oNode = v.outgoing.node;
+
+        v.incoming.setHelper(v.incoming);
+        // test if v is bad (stalagmite)
+        if(v.incoming.isStalagmite()){
+          Edge e = (Edge) oNode.getNext().getData();
+          e.setHelper(v.outgoing.prev);
+        }
+
+        // this is the end of their life kill them!
+        iNode.remove();
+        oNode.remove();
+      }
 
 
-
-
-
-
-  }
-  // prog 07: 4.2: a public void monotononize and triangulate to Polygon
-  // this is a triang
-  public void triangulate(){
-    //In triangulate, clear states
-    states.clear();
-    //In triangulate, for each edge check if it bounds a triangle 
-    for(Edge e:edges){
-      //if it bounds a triangle
-      if(e.next.next.next==e){// Found a good triangle! don't need to proceed triangulating!
-        continue;
-
-      } 
-
-      // if not find the bottom of its loop (the edge whose head is the
-      // lowest vertex) and call (overloaded) triangulate(bottom).
     }
-    //and if not, find the bottom of its loop (the edge whose head is the
-    //lowest vertex) and call (overloaded) triangulate(bottom).
+  }
 
+
+  // prog 07: 4.2: a public void monotononize and triangulate to Polygon
+  // this is a triangle
+  public void triangulate(){
+    // //In triangulate, clear states
+    // states.clear();
+    // //In triangulate, for each edge check if it bounds a triangle 
+    // for(Edge e:edges){
+    //   //if it bounds a triangle
+    //   if(e.next.next.next==e){// Found a good triangle! don't need to proceed triangulating!
+    //     continue;
+    //   } 
+    //   // TO BE FINISHED!
+
+    //   // if not find the bottom of its loop (the edge whose head is the
+    //   // lowest vertex) and call (overloaded) triangulate(bottom).
+    // }
+    // //and if not, find the bottom of its loop (the edge whose head is the
+    // //lowest vertex) and call (overloaded) triangulate(bottom).
+    states.clear();
+
+    for (Edge e : edges)
+      e.next.prev = e;
+    for (Edge e : chords)
+      e.next.prev = e;
+
+    List<Edge> bottoms = new ArrayList<Edge>();
+
+    for (Edge e : edges)
+      if (e.isBottom())
+        bottoms.add(e);
+
+    for (Edge e : chords)
+      if (e.isBottom())
+        bottoms.add(e);
+
+    for (Edge e : bottoms)
+      triangulate(e);
   }
   // prog 07: 8.1: Triangulate(bottom) sets left (=bottom) and right (=bottom.next).
 
@@ -110,15 +188,72 @@ public class Polygon {
 
   // @overrided triangulate method
   public void triangulate(Edge bottom){
+    states.add(new TState(bottom.head.p.xyz().y));
+
+    if (bottom.next.next.next == bottom)
+      return;
+
+    Edge left = bottom;
+    Edge right = bottom.next;
+
+    if (DiffY.sign(left.tail.p, right.head.p) < 0)
+      triangulateLeft(left, right);
+    else
+      triangulateRight(left, right);
 
   }
-
+    // TO BE FINISHED
   public void triangulateRight(Edge left, Edge right){
+    Edge last = right;
+    while (last.next.head != left.tail && 
+           DiffY.sign(last.next.head.p, left.tail.p) < 0) {
+      last = last.next;
+      states.add(new TState(last.maxY().p.xyz().y));
+      System.out.println("last is " + verts.indexOf(last.tail) + " " + verts.indexOf(last.head));
+      System.out.print(verts.indexOf(last.prev.tail) + " ");
+      System.out.print(verts.indexOf(last.prev.head) + "\n");
+      System.out.println(last.prev == last);
+      while (last.prev != left && 
+             AreaABC.sign(last.prev.tail.p, last.tail.p, last.head.p) > 0) {
+        Edge prev = last.prev.prev;
+        prev.addChordHeads(last);
+        System.out.println("added right chord");
+        last = prev.next;
+      }
+    }
+    while (left.next.next.next != left && left.head != last.head) {
+      left.next.addChordHeads(left.prev);
+      System.out.println("added left right chord");
+      left = left.next.next.twin;
+    }
 
+    if (left.next.next.next != left)
+      triangulateLeft(left, left.next);
   }
-
+    // TO BE FINISHED
   public void triangulateLeft(Edge left, Edge right){
+    Edge last = left;
+    while (last.prev.tail != right.head && 
+           DiffY.sign(last.prev.tail.p, right.head.p) < 0) {
+      last = last.prev;
+      states.add(new TState(last.maxY().p.xyz().y));
+      while (last.next != right && 
+             AreaABC.sign(last.next.head.p, last.head.p, last.tail.p) < 0) {
+        Edge next = last.next.next;
+        next.addChordTails(last);
+        System.out.println("added left chord");
+        last = next.prev;
+      }
+    }
 
+    while (right.prev.prev.prev != right && right.tail != last.tail) {
+      right.prev.addChordTails(right.next);
+      System.out.println("added right left chord");
+      right = right.prev.prev.twin;
+    }
+
+    if (right.prev.prev.prev != right)
+      triangulateRight(right,right.prev);
   }
   // Prog05, Part 4
   int inout = 0;
@@ -361,11 +496,14 @@ public class Polygon {
     Edge prev, next, twin;
     //prog07, 2.4 isStalagmite and isStalactite
     boolean isStalagmite(){
-      return true;
+      return (DiffY.sign(tail.p,head.p)<0 && DiffY.sign(next.tail.p,next.head.p)>0 && AreaABC.sign(tail.p,head.p,next.head.p)<0);
     }
     
     boolean isStalactite(){
-      return true;
+      return (DiffY.sign(tail.p,head.p)>0 && DiffY.sign(next.tail.p,next.head.p)<0 && AreaABC.sign(tail.p,head.p,next.head.p)<0);
+    }
+    boolean isBottom(){
+      return (DiffY.sign(tail.p,head.p)>0 && DiffY.sign(next.tail.p,next.head.p)<0 && AreaABC.sign(tail.p,head.p,next.head.p)>0);
     }
     // Prog07, 3.1, a helper Edge
     Edge helper;
@@ -391,18 +529,78 @@ public class Polygon {
    // Create e and f and make them twins.
 
    // a.next = e, e.prev = a, etc.
-
+      Edge thisnext = this.next;
+      Edge thatnext = that.next;
+      this.next = new Edge(this.head, that.head);
+      that.next = new Edge(that.head, this.head);
+      this.next.twin = that.next;
+      that.next.twin = this.next;
+      this.next.next = thatnext;
+      that.next.next = thisnext;
+      chords.add(this.next);
+      chords.add(this.next.twin);
+      states.add(new TState(that.head.p.xyz().y));
     }
     // Prog07, 6.1: Create addChordHeads that calls addChords.
-    void addChordsHeads(){
+    void addChordHeads(Edge that){
+      this.addChord(that);
+      // Edge thisnext = this.next;
+      // Edge thatnext = that.next;
+      // this.next = new Edge(this.head,that.head);
+      // this.next.prev=this;
+      // that.next=new Edge(that.head,this.head);
+      // that.next.prev=that;
+      // this.next.twin=that.next;
+      // that.next.twin=this.next;
+      // this.next.next.prev=this.next;
+      // that.next.next=thisnext;
+      // that.next.next.prev=that.next;
+      // chords.add(this.next);
+      // chords.add(this.next.twin);
+      // states.add(new TState(that.head.p.xyz().y));
 
     }
 
     // Prog07, 6.2:Create addChordTails that creates a chord from the tail of this to
     //the tail of that.
 
-    void addChordsTails(){
-
+    void addChordTails(Edge that){
+      // Edge thisprev = this.prev;
+      // Edge thatprev = that.prev;
+      // this.prev = new Edge(that.tail,this.tail);
+      // this.prev.next=this;
+      // that.prev=new Edge(this.tail,that.tail);
+      // that.prev.next=that;
+      // this.prev.twin=that.prev;
+      // that.prev.twin=this.prev;
+      // this.prev.prev=thatprev;
+      // this.prev.prev.next=this.prev;
+      // that.prev.prev = thisprev;
+      // that.prev.prev.next = that.prev;
+      // chords.add(this.prev);
+      // chords.add(this.prev.twin);
+      // states.add(new TState(that.tail.p.xyz().y));
+      Edge e = new Edge(this.tail, that.tail);
+      Edge f = new Edge(that.tail, this.tail);
+      e.twin = f;
+      f.twin = e;
+      
+      Edge b = this.next;
+      Edge d = this.prev;
+      
+      b.next = f;
+      f.prev = b;
+      
+      f.next = this;
+      this.next = f;
+      
+      d.next = e;
+      e.prev = d;
+      
+      e.next = that;
+      that.prev = e;
+      
+      chords.add(e);
     }
 
 
@@ -888,4 +1086,242 @@ public class Polygon {
     return out;
     // return this;
 }
+// insert Prog11 here
+public void draw (Graphics2D g, Color color) {
+  for (Edge e : edges)
+    e.draw(g, color);
+}
+
+  public void draw (Graphics2D g, Color color, PV2 trans, double scalar) {
+    for (Edge e : edges) {
+      PV2 t = trans.plus(e.tail.p.xyz().times(scalar));
+      PV2 h = trans.plus(e.head.p.xyz().times(scalar));
+      Drawer.drawEdge(g, t, h, color, "");
+    }
+  }
+
+  class VertPair {
+    final Vert a, b;
+
+    VertPair (Vert a, Vert b) { this.a = a; this.b = b; }
+
+    public int hashCode () {
+      return a.hashCode() + b.hashCode();
+    }
+
+    public boolean equals (Object other) {
+      VertPair that = (VertPair) other;
+      return a == that.a && b == that.b;
+    }
+  }
+
+  Map<VertPair, Vert> vertMap;
+  List<Vert> sumVerts;
+
+  Vert getSum (Vert a, Vert b) {
+    if (a.getPolygon() != this)
+      return getSum(b, a);
+
+    VertPair pair = new VertPair(a, b);
+    if (vertMap.containsKey(pair))
+      return vertMap.get(pair);
+
+    Vert v = out.new Vert(new AplusB(a.p, b.p), null, null);
+    vertMap.put(pair, v);
+    return v;
+  }
+
+  List<Edge> sumEdges;
+
+  void getSumEdges (Polygon a, Polygon b) {
+    for (Vert v : a.verts)
+      for (Edge e : b.edges) {
+        GO<PV2> p = v.incoming.tail.p;
+        GO<PV2> q = v.p;
+        GO<PV2> r = v.outgoing.head.p;
+
+        GO<PV2> s = e.tail.p;
+        GO<PV2> t = e.head.p;
+
+
+        // Continue if three conditions are not satisfied.
+        // EXERCISE
+        if (false) // change to false
+          continue;
+
+        Edge sumEdge = null;
+        // Create the sum Edge (out.new Edge....).
+        // Use getSum to add Verts together.
+        // EXERCISE
+        // Edge constructor only accepts verts
+        sumEdge=out.new Edge(getSum(v,e.tail),getSum(v,e.head));
+        sumEdges.add(sumEdge);
+      }
+  }
+
+  List<List<Vert>> intVerts;
+  List<Edge> subEdges;
+
+  public Polygon sum (Polygon that) {
+    out = new Polygon ();
+    vertMap = new HashMap<VertPair, Vert>();
+    sumVerts = new ArrayList<Vert>();
+    sumEdges = new ArrayList<Edge>();
+    intVerts = new ArrayList<List<Vert>>();
+    subEdges = new ArrayList<Edge>();
+
+    getSumEdges(this, that);
+    getSumEdges(that, this);
+
+    if (false) {
+      for (Edge e : sumEdges)
+        out.edges.add(e);
+      return out;
+    }
+
+    // intVerts.get(i) contains the Verts at which sum Edge i intersects the other sum Edges
+    for (int i = 0; i < sumEdges.size(); i++)
+      intVerts.add(new ArrayList<Vert>());
+
+    for (int i = 0; i < sumEdges.size(); i++) {
+      Edge ei = sumEdges.get(i);
+      for (int j = i+1; j < sumEdges.size(); j++) {
+        Edge ej = sumEdges.get(j);
+
+        // EXERCISE
+        if(ei.intersects(ej)){
+
+          GO<PV2> intersectionPoint=new ABintersectCD(ei.head.p,ei.tail.p,ej.head.p,ej.tail.p).getIntersection();
+          // 1 GO<PV2> two Edges (GO<PV2>, Edge incoming,Edge outgoing)
+          Vert newVert=out.new Vert(intersectionPoint,ei,ej);
+          intVerts.get(i).add(newVert);
+          intVerts.get(j).add(newVert);
+
+        }
+        // If ei and ej intersect, find their intersection point
+        // (ABintersectCD) and create a out.new Vert.  Set its
+        // incoming and outgoing to ei and ej (temporary).
+        // Add the Vert to both intVerts.get(i) and intVerts.get(j).
+        // test intersection
+      }
+    }
+
+    // Sort Verts on each edge:
+    Comparator<Vert> xLess = new XLess();
+    Comparator<Vert> xMore = new XMore();
+    for (int i = 0; i < sumEdges.size(); i++) {
+      Edge e = sumEdges.get(i);
+
+      if (DiffX.sign(e.tail.p, e.head.p) < 0)
+        intVerts.get(i).sort(xLess);
+      else
+        intVerts.get(i).sort(xMore);
+    }
+
+    for (int i = 0; i < sumEdges.size(); i++) {
+      Edge e = sumEdges.get(i);
+      List<Vert> vs = intVerts.get(i);
+
+      // EXERCISE
+      // Call checkSubEdge on every possible sub edge.
+
+
+
+    }
+
+    // Gives intersection vertices the correct incoming and outgoing.
+    for (List<Vert> l : intVerts)
+      for (Vert v : l)
+        v.incoming = v.outgoing = null;
+
+    for (Edge e : subEdges)
+      e.informVerts();
+
+    // EXERCISE
+    // Trim off dangling edges.
+    // Set tail.outgoing and head.incoming for a dangling edge to null.
+    // Set its tail and head to null.
+
+
+
+
+
+
+    for (Edge e : subEdges) {
+      if (e.tail == null)
+        continue;
+      out.edges.add(e);
+      out.verts.add(e.tail);
+    }
+
+    return out;
+  }
+
+  class XLess implements Comparator<Vert> {
+    public int compare (Vert a, Vert b) {
+      if (a == b)
+        return 0;
+      return DiffX.sign(a.p, b.p);
+    }
+  }
+
+  class XMore implements Comparator<Vert> {
+    public int compare (Vert a, Vert b) {
+      if (a == b)
+        return 0;
+      return -DiffX.sign(a.p, b.p);
+    }
+  }
+
+  boolean blocked (Edge ab, Vert v, int sign) {
+    if (!(v.p instanceof ABintersectCD))
+      return false;
+
+    if (ab != v.incoming && ab != v.outgoing) {
+      System.out.println("blocked uh oh ");
+    }
+
+    Edge cd = v.incoming == ab ? v.outgoing : v.incoming;
+
+    // EXERCISE
+    // If sign==1, return true if ab is inside the Minkowski sum (in
+    // blocked space) to the tail side of its intersection v with cd.
+    // If sign==-1, head side.
+
+
+
+    return false;
+  }
+
+  void checkSubEdge (Edge e, Vert a, Vert b) {
+    if (blocked(e, a, -1))
+      return;
+    if (blocked(e, b, 1))
+      return;
+
+    Edge s = out.new Edge(a, b);
+    subEdges.add(s);
+  }
+
+  Polygon rot180 () {
+    Polygon out = new Polygon();
+
+    for (Vert v : verts) {
+      Vert w = out.new Vert(new MinusA(v.p), null, null);
+      v.incoming.head = v.outgoing.tail = w;
+      out.verts.add(w);
+    }
+
+    for (Edge e : edges) {
+      Edge f = out.new Edge(e.tail, e.head);
+      f.informVerts();
+      out.edges.add(f);
+    }
+
+    for (Vert v : verts)
+      v.informEdges();
+
+    return out;
+  }
+
 }
