@@ -1,5 +1,9 @@
 # Computational_Geometry
 Computational Geometry Course Assignments Code Repo
+# Personal Final Project: Meshing for Point Cloud Data in RefactoredMeshing folder, README.md for that project is also in RefactoredMeshing folder, for project info and intructions to run the code, see README in that folder
+
+
+
 Repo includes codes for Assignments shown below:
 # 1. ConvexHull: 
 Three algorithms for finding Convex Hull

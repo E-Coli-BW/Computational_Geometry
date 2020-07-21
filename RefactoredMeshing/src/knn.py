@@ -1,6 +1,9 @@
+'''
+code for finding clusters in raw point cloud data
+'''
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
-clusterdown=np.loadtxt("downsample/cluster0d.txt",dtype=np.float64) 
+clusterdown=np.loadtxt("path/to/your/cluster_data",dtype=np.float64) 
 
 spatial_distance0 =pdist(clusterdown, 'euclidean')
 spatial_distance0=squareform(spatial_distance0, force='no', checks=True)
@@ -22,7 +25,7 @@ for k in range(1000):
 
 print order0
 
-clusterdown=np.loadtxt("downsample/cluster1d.txt",dtype=np.float64)
+clusterdown=np.loadtxt("/path.to/your/downsampled_data",dtype=np.float64)
 
 spatial_distance1 =pdist(clusterdown, 'euclidean')
 spatial_distance1=squareform(spatial_distance1, force='no', checks=True)
@@ -44,7 +47,7 @@ for k in range(1000):
 
 print order1
 
-clusterdown=np.loadtxt("downsample/cluster2d.txt",dtype=np.float64)
+clusterdown=np.loadtxt("/path.to/your/downsampled_data",dtype=np.float64)
 
 spatial_distance2 =pdist(clusterdown, 'euclidean')
 spatial_distance2=squareform(spatial_distance2, force='no', checks=True)
